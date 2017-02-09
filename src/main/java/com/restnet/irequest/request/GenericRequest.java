@@ -9,8 +9,7 @@ import com.restnet.irequest.utils.Utils;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 abstract class GenericRequest<T extends GenericRequest> {
 
@@ -23,6 +22,8 @@ abstract class GenericRequest<T extends GenericRequest> {
     protected StringBuilder body = new StringBuilder();
 
     boolean debug;
+
+    protected static Set<InetSocketAddress> proxies;
 
     private static boolean isProxyGlobal = false;
 
@@ -71,7 +72,27 @@ abstract class GenericRequest<T extends GenericRequest> {
 
 
 
+    public static void setJVMProxyServer(String host, int port, boolean isSOCKS){
 
+        if (!isSOCKS) {
+            System.setProperty("http.proxyHost", host);
+            System.setProperty("http.proxyPort", port + "");
+            System.setProperty("https.proxyHost", host);
+            System.setProperty("https.proxyPort", port + "");
+        } else {
+
+            System.setProperty("socksProxyHost", host);
+            System.setProperty("SocksProxyPort", port + "");
+
+        }
+
+    }
+
+    public static void setProxyList(Collection<InetSocketAddress> proxyList){
+
+        proxies = new HashSet<InetSocketAddress>(proxyList);
+
+    }
 
 
     // TODO convert formparams to hashmap
@@ -158,21 +179,7 @@ abstract class GenericRequest<T extends GenericRequest> {
 
 
 
-    public static void setJVMProxyServer(String host, int port, boolean isSOCKS){
 
-        if (!isSOCKS) {
-            System.setProperty("http.proxyHost", host);
-            System.setProperty("http.proxyPort", port + "");
-            System.setProperty("https.proxyHost", host);
-            System.setProperty("https.proxyPort", port + "");
-        } else {
-
-            System.setProperty("socksProxyHost", host);
-            System.setProperty("SocksProxyPort", port + "");
-
-        }
-
-    }
 
     public T readTimeout(int sec){
 
