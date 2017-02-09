@@ -13,18 +13,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by Asus on 2/9/2017.
+ * Utility class inherited from Request to work with directly 'multipart/form-data' and put appropriate parameters convenient way.
+ * Used web-kit style boundary for no reason.
+ * @author TamerlanA
  */
-public class FormRequest extends Request {
+
+public class FormRequest extends GenericRequest<FormRequest> {
 
     HashMap<String, String> params = new HashMap<String, String>();
 
 
     protected FormRequest(String urlRaw) throws MalformedURLException, IOException {
 
-        super(urlRaw, Method.POST); // default post
+        super(urlRaw, Method.POST);
         header("Content-Type", "application/x-www-form-urlencoded");
-        http.setRequestProperty( "charset", "utf-8");
+        //super.header( "charset", "utf-8");
+    }
+
+    @Override
+    protected FormRequest getThis() {
+        return this;
     }
 
     @Override
@@ -38,6 +46,7 @@ public class FormRequest extends Request {
 
 
 
+
     public FormRequest param(String name, String value){
 
         params.put(name, value);
@@ -48,6 +57,18 @@ public class FormRequest extends Request {
     public FormRequest params(HashMap<String, String > params){
         this.params = params;
         return this;
+    }
+
+
+    /**
+     *  Converts form request to multipart with passed form params and headers
+     * @return
+     */
+
+    public MultipartRequest multipart(String charset) {
+
+        return new MultipartRequest(this, charset);
+
     }
 
 

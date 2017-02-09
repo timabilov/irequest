@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by Asus on 2/8/2017.
@@ -59,6 +60,16 @@ public class Utils {
     }
 
 
+    public static String randomString(int length){
+        StringBuilder b = new StringBuilder();
+        for(int i = 0; i < length; i++){
+            b.append(base.charAt(random.nextInt(base.length())));
+        }
+        return b.toString();
+    }
+
+    private static String base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabsdefghijklmnopqrstuvwxyz";
+    private static Random random = new Random();
 
     public static  void write(OutputStream outputStream, String data) throws IOException {
         String str = "";
@@ -69,4 +80,7 @@ public class Utils {
 
         }
     }
+
+
+
 }
