@@ -250,6 +250,11 @@ abstract class GenericRequest<T extends GenericRequest> {
     }
 
 
+    public Response send() throws IOException, BadHTTPStatusException {
+        String raw = fetch();
+        return new Response( http.getHeaderFields() , raw);
+    }
+
     public static boolean isProxyGlobal() {
         return isProxyGlobal;
     }

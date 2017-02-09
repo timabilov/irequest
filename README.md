@@ -51,6 +51,10 @@ public class Main{
     
     
                 System.out.println(json.toString());
+                
+                Request.get("http://httpbin.org/response-headers?key=val") //
+                                    .send() // return Response object
+                                    .printHeaders(); //print all headers including status line
     
             } catch (IOException ioe){
     

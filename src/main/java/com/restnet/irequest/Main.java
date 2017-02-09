@@ -57,8 +57,20 @@ public class Main {
                     .timeout(10) //read and connect timeout, maybe destructed with overloaded method.
                     .fetchJson(); // result as json node
 
-
+            System.out.println("Result json: ");
             System.out.println(json.toString());
+
+
+            Request.get("http://httpbin.org/response-headers?key=val") //
+                    .send() // return Response object
+                    .printHeaders();
+
+
+            Request.get("http://httpbin.org/redirect/1") //
+                    .send()
+                    .printHeaders();
+
+
 
         } catch (IOException ioe){
 
