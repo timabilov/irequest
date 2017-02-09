@@ -8,6 +8,7 @@ import com.restnet.irequest.utils.Utils;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.util.HashMap;
 
 /**
  *
@@ -15,8 +16,17 @@ import java.net.MalformedURLException;
 public class Request extends GenericRequest<Request> {
 
 
+    /**
+     * for cloning identical request
+     * @param request
+     * @throws MalformedURLException
+     * @throws IOException
+     */
+    protected Request(GenericRequest request) throws MalformedURLException, IOException {
 
+        super(request.http, request.url, request.method, request.body, request.headers);
 
+    }
 
 
     protected Request(String urlRaw, Method method) throws MalformedURLException, IOException {

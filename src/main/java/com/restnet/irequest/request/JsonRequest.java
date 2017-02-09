@@ -3,6 +3,7 @@ package com.restnet.irequest.request;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restnet.irequest.exception.BadHTTPStatusException;
+import com.restnet.irequest.exception.ProxyAuthorizationRequiredException;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -70,7 +71,7 @@ public class JsonRequest extends GenericRequest<JsonRequest> {
 
 
     @Override
-    public String fetch() throws IOException, BadHTTPStatusException {
+    public String fetch() throws IOException, BadHTTPStatusException, ProxyAuthorizationRequiredException {
         buildBody();
         return super.fetch();
     }

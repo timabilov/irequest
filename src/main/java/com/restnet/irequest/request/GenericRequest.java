@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restnet.irequest.exception.BadHTTPStatusException;
 import com.restnet.irequest.exception.BodyNotWritableException;
+import com.restnet.irequest.exception.ProxyAuthorizationRequiredException;
 import com.restnet.irequest.utils.Utils;
 
 import java.io.IOException;
@@ -25,9 +26,12 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     protected static Set<InetSocketAddress> proxies;
 
+    // just for tracking
+    HashMap<String, String> headers = new HashMap<String, String>();
+
     private static boolean isProxyGlobal = false;
 
-
+    private boolean attemptProxiesIfFail = false;
     protected abstract T getThis();
 
 
@@ -48,6 +52,27 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     }
 
+    /**
+     * used for super instantiating , cloning Request instance
+     * @param http
+     * @param url
+     * @param method
+     * @param body
+     * @param headers
+     */
+    protected GenericRequest(HttpURLConnection http, String url, Method method, StringBuilder body, HashMap<String, String> headers){
+
+
+        this.http = http;
+        this.url = url;
+        this.method = method;
+        this.body = body;
+        this.headers = headers;
+
+        if (!isProxyGlobal)
+            setJVMProxyServer("", 0, false); // reset
+
+    }
 
     protected GenericRequest(String urlRaw, Method method) throws MalformedURLException, IOException { // explicit pointing malform for  readability
 
@@ -114,6 +139,7 @@ abstract class GenericRequest<T extends GenericRequest> {
     public T  header(String key, String value){
 
         http.setRequestProperty(key, value);
+        headers.put(key, value);
         return getThis();
     }
 
@@ -178,7 +204,11 @@ abstract class GenericRequest<T extends GenericRequest> {
     }
 
 
+    public T tryAllProxies(){
 
+        attemptProxiesIfFail = true;
+        return getThis();
+    }
 
 
     public T readTimeout(int sec){
@@ -208,7 +238,7 @@ abstract class GenericRequest<T extends GenericRequest> {
     }
 
 
-    public String fetch() throws IOException, BadHTTPStatusException {
+    public String fetch() throws IOException, BadHTTPStatusException, ProxyAuthorizationRequiredException {
 
 
         // TODO get header
@@ -228,15 +258,31 @@ abstract class GenericRequest<T extends GenericRequest> {
             String responseBody = Utils.read(http.getInputStream());
             return responseBody;
 
-        } else {
+        } else if (status == HttpURLConnection.HTTP_PROXY_AUTH ) {
+
+            throw new ProxyAuthorizationRequiredException();
+
+        } else{
             String errorData = Utils.read(http.getErrorStream());
+
+            if (attemptProxiesIfFail){
+
+                Request r = null;
+                for (InetSocketAddress proxy: proxies){
+
+
+                    r = new Request(this); //clone request
+                    r.fetch(); // proxy session?
+
+                }
+            }
             throw new BadHTTPStatusException(status, errorData);
         }
 
     }
 
 
-    public JsonNode fetchJson() throws IOException, BadHTTPStatusException {
+    public JsonNode fetchJson() throws IOException, BadHTTPStatusException, ProxyAuthorizationRequiredException {
 
         String raw = fetch();
 
@@ -247,7 +293,7 @@ abstract class GenericRequest<T extends GenericRequest> {
     }
 
 
-    public <T> T fetchJson(Class<T> type) throws IOException, BadHTTPStatusException {
+    public <T> T fetchJson(Class<T> type) throws IOException, BadHTTPStatusException, ProxyAuthorizationRequiredException {
 
         String raw = fetch();
 
@@ -257,7 +303,7 @@ abstract class GenericRequest<T extends GenericRequest> {
     }
 
 
-    public Response send() throws IOException, BadHTTPStatusException {
+    public Response send() throws IOException, BadHTTPStatusException, ProxyAuthorizationRequiredException {
         String raw = fetch();
         return new Response( http.getHeaderFields() , raw);
     }

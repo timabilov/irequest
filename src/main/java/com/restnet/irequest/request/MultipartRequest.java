@@ -3,6 +3,7 @@ package com.restnet.irequest.request;
 
 
 import com.restnet.irequest.exception.BadHTTPStatusException;
+import com.restnet.irequest.exception.ProxyAuthorizationRequiredException;
 import com.restnet.irequest.utils.Utils;
 
 import javax.xml.bind.DatatypeConverter;
@@ -155,7 +156,7 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
 
 
     @Override
-    public String fetch() throws IOException, BadHTTPStatusException {
+    public String fetch() throws IOException, BadHTTPStatusException, ProxyAuthorizationRequiredException {
 
 
         buildBody();
