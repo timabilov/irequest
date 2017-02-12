@@ -3,8 +3,10 @@ package com.restnet.irequest.request;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restnet.irequest.exception.BadHTTPStatusException;
+import com.restnet.irequest.exception.BodyNotWritableException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 
@@ -18,13 +20,13 @@ public class JsonRequest extends GenericRequest<JsonRequest> {
 
 
     protected JsonRequest(GenericRequest r){
-        super(r.http, r.url, r.method,  r.body);
+        super(r.http, r.url, r.method,  r.body, r.name, r.printRawAtTheEnd);
 
         super.header("Content-Type", "application/json");
     }
-    protected JsonRequest(String urlRaw) throws MalformedURLException, IOException {
+    protected JsonRequest(String urlRaw, Method method) throws MalformedURLException, IOException {
 
-        super(urlRaw, Method.POST);
+        super(urlRaw, method);
 
         super.header("Content-Type", "application/json");
     }
@@ -44,6 +46,10 @@ public class JsonRequest extends GenericRequest<JsonRequest> {
         return this;
     }
 
+    public JsonRequest body(String content)throws BodyNotWritableException {
+        super.body(content);
+        return getThis();
+    }
 
     public JsonRequest with(HashMap<String, Object> json){
 
@@ -52,7 +58,7 @@ public class JsonRequest extends GenericRequest<JsonRequest> {
     }
 
 
-    private void buildBody() throws JsonProcessingException {
+    protected void buildBody() throws JsonProcessingException {
 
         ObjectMapper mapper = new ObjectMapper();
         String rawJson = mapper.writeValueAsString(json);
@@ -68,6 +74,10 @@ public class JsonRequest extends GenericRequest<JsonRequest> {
 
     }
 
+    public HashMap<String, Object> getParams(){
+
+        return this.json;
+    }
 
     @Override
     public String fetch() throws IOException, BadHTTPStatusException {

@@ -43,6 +43,15 @@ public class Request extends GenericRequest<Request> {
     }
 
 
+    public static JsonRequest put(String urlRaw) throws MalformedURLException, IOException {
 
+        return new JsonRequest(urlRaw, Method.PUT);
+    }
+
+
+    public static JsonRequest json(String urlRaw, Method method) throws MalformedURLException, IOException {
+
+        return new JsonRequest(urlRaw, method);
+    }
 
 }

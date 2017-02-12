@@ -3,6 +3,9 @@ package com.restnet.irequest.request;
 
 
 import com.restnet.irequest.exception.BadHTTPStatusException;
+import com.restnet.irequest.exception.BodyNotWritableException;
+import com.restnet.irequest.exception.FileRelocationException;
+import com.restnet.irequest.utils.MapUtils;
 import com.restnet.irequest.utils.Utils;
 
 import javax.xml.bind.DatatypeConverter;
@@ -38,12 +41,12 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
      */
     protected MultipartRequest(FormRequest r, String charset){
 
-        super(r.http, r.url, r.method,  r.body);
+        super(r.http, r.url, r.method,  r.body, r.name, r.printRawAtTheEnd);
         this.params = r.params;
         this.charset = charset;
 
 
-        boundary = "----WebKitFormBoundary".concat("CYnIFJFo8csRRtJX"); // used webkit style boundary  for no reason;
+        boundary = "----WebKitFormBoundary".concat(Utils.randomString(16)); // used webkit style boundary  for no reason;
         super.header("Content-Type",
                 "multipart/form-data; boundary=" + boundary);
 
@@ -72,6 +75,45 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
         return this;
     }
 
+    @Override
+    public MultipartRequest header(String key, String value) {
+        // ignore content types because based upon
+        if (key.equals("Content-Type"))
+            return this;
+        super.header(key, value);
+        return this;
+    }
+
+    public MultipartRequest body(String content)throws BodyNotWritableException {
+        super.body(content);
+        return getThis();
+    }
+
+
+    @Override
+    public JsonRequest jsonify() throws FileRelocationException{
+
+        JsonRequest jsonRequest = new JsonRequest(this).with(new HashMap<String, Object>(params));
+
+        for (Map.Entry<String, File> file: files.entrySet()){
+            try {
+
+                FileInputStream fis = new FileInputStream(file.getValue());
+                jsonRequest.param(file.getKey(), MapUtils.mapOf(file.getValue().getName(), DatatypeConverter.printBase64Binary(Utils.read(fis, "UTF-8").getBytes())));
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                throw new FileRelocationException("File not found during file translations: ".concat(file.getKey()).concat(":").concat(file.getValue().getName()));
+            } catch (IOException ioe){
+                ioe.printStackTrace();
+                throw new FileRelocationException("Stream read error during file translations: ".concat(file.getKey()).concat(":").concat(file.getValue().getName()));
+
+            }
+        }
+
+        return jsonRequest;
+    }
+
     public MultipartRequest param(String name, File file){
 
 
@@ -86,7 +128,7 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
     }
 
 
-    private void buildBody() throws IOException {
+    protected void buildBody() throws IOException {
 
 
         for (Map.Entry<String, String> pair: params.entrySet()){

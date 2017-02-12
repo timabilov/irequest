@@ -7,3 +7,6 @@
 # Maven
 log/
 target/
+*.html
+*.txt
+*.json

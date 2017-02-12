@@ -1,8 +1,10 @@
 package com.restnet.irequest.request;
 
 import com.restnet.irequest.exception.BadHTTPStatusException;
+import com.restnet.irequest.exception.BodyNotWritableException;
 import com.restnet.irequest.utils.Utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -45,12 +47,34 @@ public class FormRequest extends GenericRequest<FormRequest> {
     }
 
 
+    public FormRequest body(String content)throws BodyNotWritableException{
+        super.body(content);
+        return getThis();
+    }
 
+    @Override
+    public JsonRequest jsonify(){
+
+        return new JsonRequest(this).with(new HashMap<String, Object>(params));
+    }
 
     public FormRequest param(String name, String value){
 
         params.put(name, value);
         return this;
+
+    }
+
+    /**
+     * Implicitly converts to multipart(!)
+     * @param name
+     * @param file
+     * @return
+     */
+    public MultipartRequest param(String name, File file){
+
+        ;
+        return multipart("UTF-8").params(params).param(name, file);
 
     }
 
@@ -67,24 +91,24 @@ public class FormRequest extends GenericRequest<FormRequest> {
 
     public MultipartRequest multipart(String charset) {
 
-        return new MultipartRequest(this, charset);
+        return new MultipartRequest(this, charset).params(params);
 
     }
 
 
-    private void buildBody() throws UnsupportedEncodingException {
+    protected void buildBody() throws UnsupportedEncodingException {
+        if (params != null && params.size() > 0) {
+            List<String> paramPairs = new ArrayList<String>();
+            for (Map.Entry<String, String> paramPair : params.entrySet()) {
 
-        List<String> paramPairs = new ArrayList<String>();
-        for (Map.Entry<String, String> paramPair: params.entrySet()){
+                paramPairs.add(URLEncoder.encode(paramPair.getKey(), "UTF-8").concat("=").concat(URLEncoder.encode(paramPair.getValue(), "UTF-8")));
+            }
 
-            paramPairs.add(URLEncoder.encode(paramPair.getKey(), "UTF-8").concat("=").concat(URLEncoder.encode(paramPair.getValue(), "UTF-8")));
+
+            String concated = Utils.join(paramPairs, "&");
+
+            body = new StringBuilder(concated);
         }
-
-
-        String concated = Utils.join(paramPairs, "&");
-
-        body = new StringBuilder(concated);
-
     }
 
     @Override
