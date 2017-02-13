@@ -419,6 +419,17 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     }
 
+
+    public void pipe(OutputStream os) throws FileNotFoundException, IOException, BadHTTPStatusException {
+
+
+
+
+
+        Utils.write(os, new ByteArrayInputStream(fetchBytes().toByteArray()));
+
+    }
+
     public JsonNode fetchJson() throws IOException, BadHTTPStatusException {
 
         String raw = fetch();

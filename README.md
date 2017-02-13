@@ -34,7 +34,7 @@ public class Main {
 
 
             Request.get("https://www.google.az/favicon.ico")
-                    .pipe("favicon.ico");
+                    .pipe("favicon.ico"); // pipe to any stream
 
 
             Request.get("https://www.google.az/")
