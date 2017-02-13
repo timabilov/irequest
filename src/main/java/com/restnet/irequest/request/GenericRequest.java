@@ -3,13 +3,12 @@ package com.restnet.irequest.request;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.restnet.irequest.enums.HttpCompressType;
 import com.restnet.irequest.exception.*;
 import com.restnet.irequest.utils.MapUtils;
 import com.restnet.irequest.utils.Utils;
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +44,7 @@ abstract class GenericRequest<T extends GenericRequest> {
     /**
      *  Decorated InputStream implementation class. For gzip, deflate reading and etc.
      */
-    Class userStreamDecorator = null;
+    Class userStreamDecoratorClazz = null;
 
 
 
@@ -147,7 +146,7 @@ abstract class GenericRequest<T extends GenericRequest> {
             try {
                 MapUtils.parse(cookies, value, ";", "=", forceValidateCookies);
             } catch (ParseToMapException ptme){
-                throw new CookieParseException("Error parsing cookie through ';'. \n Chunk index: " + ptme.getErrorIndex() + ". Chunk: ".concat(ptme.getPart()).concat(" \n.To reduce the severity level turn off global validate cookies"));
+                throw new CookieParseException("Error parsing cookie through ';'. \n Chunk index: " + ptme.getErrorIndex() + ". Chunk: ".concat(ptme.getPart()).concat(".\nTo reduce the severity level turn off global cookie validation"));
             }
         }
 
@@ -183,7 +182,7 @@ abstract class GenericRequest<T extends GenericRequest> {
     }
 
     /**
-     * This method intended to setting proxy with basic(!) auth , java.net.authenticator  and system properties. Anyway explicit setting  system properties  recommended. For SOCKS proxy applies the same(set explicit)  except - basic auth is not needed.
+     * This method intended to quick setting proxy with basic(!) auth , java.net.authenticator  and system properties. Anyway explicit setting  system properties  recommended. For SOCKS proxy applies the same(set explicit)  except - basic auth is not needed.
      * @param username
      * @param password
      * @return
@@ -264,9 +263,9 @@ abstract class GenericRequest<T extends GenericRequest> {
         return header("Accept-Encoding", encoding);
     }
 
-    private  <S extends InputStream> T withReader(Class<S> reader){
+    public   <S extends InputStream> T withReader(Class<S> reader){
 
-        this.userStreamDecorator = reader;
+        this.userStreamDecoratorClazz = reader;
 
         return getThis();
 
@@ -278,15 +277,15 @@ abstract class GenericRequest<T extends GenericRequest> {
         this.supressHttpFail = true;
         return getThis();
     }
-    public String fetch() throws IOException, BadHTTPStatusException {
 
-
-        // TODO have to solve efficient policy for large bytes read and write?.
-
+    private void finalizeBuild() throws IOException {
 
         header("Content-Length", body.length() + "");
-        acceptEncoding("gzip");
-        withReader(GZIPInputStream.class);
+
+        if (http.getRequestProperty("Accept-Encoding") == null) {
+            acceptEncoding("gzip");
+           // withReader(GZIPInputStream.class);
+        }
 
         if (cookies.size() > 0)
             header("Cookie", MapUtils.join(cookies, ";", "="));
@@ -297,78 +296,110 @@ abstract class GenericRequest<T extends GenericRequest> {
             }
 
         if (printRawAtTheEnd)
-            snapshot();
+            System.out.println(toString());
 
         if (http.getDoOutput())
-            Utils.write(http.getOutputStream(), body.toString());
+            Utils.write(http.getOutputStream(), new ByteArrayInputStream(body.toString().getBytes("UTF-8")));
 
-        int status = http.getResponseCode(); //force connect
+    }
+
+    public String fetch() throws IOException, BadHTTPStatusException {
+
+        return new String(fetchBytes().toByteArray(), "UTF-8");
+    }
+
+
+
+    ByteArrayOutputStream fetchBytes() throws IOException, BadHTTPStatusException {
+
+
+        // TODO have to solve efficient policy for large bytes read and write?.
+
+        finalizeBuild();
+        int status = -1;
+        try {
+            status = http.getResponseCode(); // force connect
+        } catch (Exception e){
+
+            throw new ConnectException("Cannot connect to  " +http.getURL().toString() + "." +
+                    " Probably server does not respond. Maybe proxy prevents connection?");
+        }
 
 
         if (status < 400) {
 
             InputStream inputStream = http.getInputStream();
 
-            if (userStreamDecorator != null && http.getContentEncoding() !=null && http.getContentEncoding().equals("gzip")){
-                try {
-                    inputStream = Utils.decorate(userStreamDecorator, http.getInputStream());
-                } catch (NoSuchMethodException e) {
+            if (http.getContentEncoding() != null){
 
-                    e.printStackTrace();
-                    throw new ReaderInitException("Cannot init your reader. " + e.getMessage());
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                    throw new ReaderInitException("Cannot init your reader. " + e.getMessage());
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                    throw new ReaderInitException("Cannot init your reader. " + e.getMessage());
-                } catch (InstantiationException e) {
-                    e.printStackTrace();
-                    throw new ReaderInitException("Cannot init your reader. " + e.getMessage());
-                }
+                Class decorator = resolveDecoder();
+
+                if (decorator != null) // exists any decompress decorator
+                    inputStream = Utils.decorate(decorator, http.getInputStream());
+
             }
 
 
-            String responseBody = Utils.read(inputStream, "UTF-8");
-            return responseBody;
+            return Utils.read(inputStream);
 
         } else {
 
-            InputStream inputStream = http.getErrorStream();
+            InputStream errorStream = http.getErrorStream();
 
-            if (inputStream == null) {
+            if (errorStream == null) {
 
                  if (supressHttpFail)
-                     return "";
+                     return new ByteArrayOutputStream(0);
                  throw new BadHTTPStatusException(status, "");
             }
-            if (userStreamDecorator != null && http.getContentEncoding() !=null && http.getContentEncoding().equals("gzip")){
-                try {
-                    inputStream = Utils.decorate(userStreamDecorator, http.getInputStream());
-                } catch (NoSuchMethodException e) {
 
-                    e.printStackTrace();
-                    throw new ReaderInitException("Cannot init your reader. " + e.getMessage());
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                    throw new ReaderInitException("Cannot init your reader. " + e.getMessage());
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                    throw new ReaderInitException("Cannot init your reader. " + e.getMessage());
-                } catch (InstantiationException e) {
-                    e.printStackTrace();
-                    throw new ReaderInitException("Cannot init your reader. " + e.getMessage());
-                }
+            if (http.getContentEncoding() != null){
+
+                Class decorator = resolveDecoder();
+
+                if (decorator != null) // exists any decompress decorator
+                    errorStream = Utils.decorate(decorator, http.getInputStream());
+
             }
 
-            String errorData = Utils.read(http.getErrorStream(), "UTF-8");
+            ByteArrayOutputStream bos = Utils.read(errorStream);
             if (supressHttpFail)
-                return errorData;
-            throw new BadHTTPStatusException(status, errorData);
+                return bos;
+            throw new BadHTTPStatusException(status, new String(bos.toByteArray(), "UTF-8"));
         }
 
     }
 
+
+    private Class resolveDecoder(){
+
+        try {
+
+            Class decorator = null;
+            try {
+                HttpCompressType consciousCompressed = HttpCompressType.valueOf(http.getContentEncoding().toUpperCase());
+                decorator = consciousCompressed.getDecompressorClazz();
+            } catch (Exception e){
+
+                decorator = userStreamDecoratorClazz;
+                if (decorator == null){
+
+                    System.err.println(http.getContentEncoding() + " - No suitable de-compressor class(InputStream) was founded to decode content. You can provide one.");
+                }
+            }
+
+
+
+
+            return decorator;
+
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            throw new ReaderInitException("Cannot init your reader. " + e.getMessage());
+        }
+    }
 
     /**
      * Force fetch and dump to file
@@ -378,13 +409,13 @@ abstract class GenericRequest<T extends GenericRequest> {
      * @throws IOException
      * @throws BadHTTPStatusException
      */
-    public void fetchAndSaveTo(String filename) throws FileNotFoundException, IOException, BadHTTPStatusException {
+    public void pipe(String filename) throws FileNotFoundException, IOException, BadHTTPStatusException {
 
 
-        String raw = fetch();
+
         FileOutputStream fos = new FileOutputStream(new File(filename));
 
-        Utils.write(fos, raw);
+        Utils.write(fos, new ByteArrayInputStream(fetchBytes().toByteArray()));
 
     }
 
@@ -433,7 +464,7 @@ abstract class GenericRequest<T extends GenericRequest> {
         raw.append("\nName: ").append(name).append("\n\n  ");
 
         //Request line Todo protocol version
-        raw.append(method.name()).append(" ").append(http.getURL().getPath()).append(" ").append(url.getProtocol().toUpperCase() +"/1.1").append("\n  ");
+        raw.append(method.name()).append(" ").append(http.getURL().getPath()).append(" ").append(url.getProtocol().toUpperCase().replace("S", "") +"/1.1").append("\n  ");
 
         //Host
         raw.append("Host: ").append(url.getHost().concat(":".concat(port))).append("\n  ");
@@ -448,7 +479,7 @@ abstract class GenericRequest<T extends GenericRequest> {
                 .append(MapUtils.join(cookies,"; ", "=").concat("\n\n"))
                 .append(body.toString().replaceAll("(?m)^", "  ").concat("\n"));
 
-        raw.append("----");
+        raw.append("\n-----");
 
         return  raw.toString();
     }
@@ -471,12 +502,12 @@ abstract class GenericRequest<T extends GenericRequest> {
     }*/
 
     /**
-     * Prints raw request snapshot only with initial(!) state. Consider that final stage has own changes to request.
+     * Prints raw request snapshot before send
      * @return
      */
     public T snapshot(){
 
-
+        printRawAtTheEnd = true;
         //System.out.println(toString());
         return getThis();
     }

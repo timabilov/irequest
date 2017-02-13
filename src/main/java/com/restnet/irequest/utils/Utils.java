@@ -90,7 +90,7 @@ public class Utils {
 
 
 
-    public static byte[] read(InputStream inputStream) throws IOException {
+    public static ByteArrayOutputStream read(InputStream inputStream) throws IOException {
         String str = "";
         byte[] data;
         try (InputStream is = inputStream) {
@@ -105,7 +105,7 @@ public class Utils {
                 read = is.read(buffer);
             }
 
-            return bos.toByteArray();
+            return bos;
 
 
 
@@ -126,26 +126,47 @@ public class Utils {
     private static String base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabsdefghijklmnopqrstuvwxyz";
     private static Random random = new Random();
 
-    public static  void write(OutputStream outputStream, String data) throws IOException {
+    public static  void write(OutputStream outputStream, InputStream is) throws IOException {
         String str = "";
+        byte[] buffer = new byte[2048];
+        int readed = is.read(buffer);
+
         try (OutputStream os = outputStream) {
+            while (readed != -1) {
 
-            os.write(data.getBytes(StandardCharsets.UTF_8));
-
+                os.write(buffer, 0 , readed);
+                readed = is.read(buffer);
+            }
 
         }
+
+        is.close();
     }
 
+    // TODO log and good handle
+    public static <S extends InputStream> InputStream decorate(Class<S>  wrapWith, InputStream stream)  {
 
-    public static <S extends InputStream> InputStream decorate(Class<S>  wrapWith, InputStream stream) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
+        Class<S> clazz =  wrapWith;
+        Constructor<S> constructor = null;
+        try {
+            constructor = clazz.getDeclaredConstructor(InputStream.class);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        constructor.setAccessible(true);
+        InputStream instance = null;
+        try {
+            instance = constructor.newInstance(stream);
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
 
-            Class<S> clazz =  wrapWith;
-            Constructor<S> constructor = clazz.getDeclaredConstructor(InputStream.class);
-            constructor.setAccessible(true);
-            InputStream instance = constructor.newInstance(stream);
-
-            return instance;
+        return instance;
 
     }
 

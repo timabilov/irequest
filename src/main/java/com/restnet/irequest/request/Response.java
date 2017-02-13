@@ -3,10 +3,7 @@ package com.restnet.irequest.request;
 import com.restnet.irequest.utils.MapUtils;
 import com.restnet.irequest.utils.Utils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -55,13 +52,14 @@ public class Response {
     /**
      * Dump response meta to file.
      * @param fileName
+     * @param append
      * @throws IOException
      */
-    public Response dump(String fileName) throws IOException {
+    public Response dump(String fileName, boolean append) throws IOException {
 
-        FileOutputStream fos = new FileOutputStream(new File(fileName), true);
+        FileOutputStream fos = new FileOutputStream(new File(fileName), append);
 
-        Utils.write(fos, requestName.concat("\n\n").concat(rawHeaders()).concat("\n"));
+        Utils.write(fos, new ByteArrayInputStream(requestName.concat("\n\n").concat(rawHeaders()).concat("\n").getBytes("UTF-8")));
         return this;
     }
 
@@ -78,7 +76,7 @@ public class Response {
 
         FileOutputStream fos = new FileOutputStream(fileName);
 
-        Utils.write(fos, body);
+        Utils.write(fos, new ByteArrayInputStream(body.getBytes("UTF-8")));
         return this;
     }
 
