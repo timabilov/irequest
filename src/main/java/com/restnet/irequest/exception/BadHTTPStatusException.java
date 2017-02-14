@@ -5,10 +5,27 @@ package com.restnet.irequest.exception;
  */
 public class BadHTTPStatusException extends Exception {
 
-
+    int status;
+    String data;
 
     public BadHTTPStatusException(int status, String data){
 
         super("Request returned bad status: " + status + " \n" + data);
+
+        this.status = status;
+        this.data = data;
     }
+
+
+    public String getData() {
+        return data;
+    }
+
+
+
+    public int getStatus() {
+        return status;
+    }
+
+
 }
