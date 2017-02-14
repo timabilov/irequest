@@ -60,7 +60,6 @@ public class Main {
                     .pipe("post.json");
 
             result = Request.post("http://www.posttestserver.com/post.php")
-                    //.proxy("112.214.73.253", 80) no need because of  previous global settings
                     .param("phone", "+994XXYYYYYYY")
                     .param("id", "123456")
                     .param("file", new File("C:/Finish.log")) // Upload file. Implicitly casts to multipart(!).
