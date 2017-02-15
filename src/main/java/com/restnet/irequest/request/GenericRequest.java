@@ -10,17 +10,27 @@ import com.restnet.irequest.utils.Utils;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 abstract class GenericRequest<T extends GenericRequest> {
 
 
+    HashMap<String, Object> params = new HashMap<String, Object>();
+
+    HashMap<String, String> queryParams = new HashMap<String, String>();
 
     private static boolean isProxyGlobal = false;
     private static boolean forceValidateCookies = true;
+
+    int readTimeout = -1;
+    int connectTimeout = -1;
+
+    HashMap<String, String> headers = new HashMap<String, String>();
+
+
 
     HttpURLConnection http;
     String url;
@@ -37,7 +47,7 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     boolean printRawAtTheEnd;
 
-    boolean supressHttpFail = false;
+    boolean suppressHttpFail = false;
 
     String name;
 
@@ -55,7 +65,8 @@ abstract class GenericRequest<T extends GenericRequest> {
      *  Only for conversion purposes to transfer current state.
      */
 
-    protected GenericRequest(HttpURLConnection http, String url, Method method, StringBuilder body, String name, boolean printRawAtTheEnd){
+    protected GenericRequest(HttpURLConnection http, String url, Method method, StringBuilder body, String name, Class userStreamDecoratorClazz, boolean printRawAtTheEnd, boolean supressHttpFail) {
+
 
 
         this.http = http;
@@ -64,9 +75,11 @@ abstract class GenericRequest<T extends GenericRequest> {
         this.body = body;
         this.name = name;
         this.printRawAtTheEnd = printRawAtTheEnd;
-
+        this.userStreamDecoratorClazz = userStreamDecoratorClazz;
+        this.suppressHttpFail = supressHttpFail;
 
     }
+
 
 
     /**
@@ -79,26 +92,50 @@ abstract class GenericRequest<T extends GenericRequest> {
     protected GenericRequest(String urlRaw, Method method) throws MalformedURLException, IOException { // explicit pointing malform for  readability
 
 
-        this(null, urlRaw, method, new StringBuilder(), "Plain request", false);
+        this(null, urlRaw, method, new StringBuilder(), "Plain request", null, false, false);
 
-        if (!urlRaw.replace("s", "").startsWith("http://") ){ // drop s from https
-            urlRaw = "http://" + urlRaw;
+        String queryParams = new URL(url).getQuery();
+
+
+        if (queryParams!=null){
+            this.url = this.url.replace(queryParams, "").replace("?","");
+            MapUtils.parse(this.queryParams, queryParams,"&", "=", false);
         }
 
-        URL url = new URL(urlRaw);
+
+
+    }
+
+
+    protected void setupConnection() throws IOException {
+
+        if (!url.replace("s", "").startsWith("http://") ){ // drop s from https(if) and check for scheme
+            this.url = "http://" + this.url;
+        }
+
+        URL url = new URL(this.url);
         http = ((HttpURLConnection)url.openConnection());
         if (! (method == Method.GET))
             http.setDoOutput(true);
         http.setDoInput(true); // just explicit
         http.setUseCaches(false);
-        http.setRequestProperty("User-Agent" , "CodeJava Agent");
+        http.setRequestProperty("User-Agent" , "iRequest Agent");
         http.setRequestMethod(method.name());
 
         if (!isProxyGlobal)
             setJVMProxyServer("", 0, false); // reset
 
-    }
+        if (readTimeout > 0)
+            http.setReadTimeout(readTimeout*1000);
+        if (connectTimeout > 0)
+            http.setConnectTimeout(connectTimeout*1000);
 
+        migrateHeaders();
+
+        if (http.getDoOutput())
+            Utils.write(http.getOutputStream(), new ByteArrayInputStream(body.toString().getBytes("UTF-8")));
+
+    }
 
 
     public static void setJVMProxyServer(String host, int port, boolean isSOCKS){
@@ -117,7 +154,7 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     }
 
-    public static void setForceValidateCookies(boolean skip){
+    public static void skipCookieValidation(boolean skip){
 
         forceValidateCookies = skip;
     }
@@ -129,31 +166,85 @@ abstract class GenericRequest<T extends GenericRequest> {
         return new JsonRequest(this);
     }
 
+    /**
+     * appends(!) url argument(query param)
+     * @param key
+     * @param value
+     * @return
+     */
+    public T arg(String key, String value){
 
 
-    T body(String content) throws BodyNotWritableException {
+        queryParams.put(key, value);
 
-        if (method == Method.GET)
-            throw new BodyNotWritableException();
+        return getThis();
+
+    }
+
+    /**
+     * merge with previously added params
+     * @param queryParams
+     * @return
+     */
+    public T args(HashMap<String, String> queryParams){
+
+        MapUtils.merge(params, new HashMap<String,Object>(queryParams));
+        return getThis();
+
+    }
+
+    protected T param(String key, String value){
+
+        params.put(key, value);
+        return getThis();
+
+    }
+
+    /**
+     * merge with previously added params
+     * @param params
+     * @return
+     */
+
+    protected T params(HashMap<String, String> params){
+
+        MapUtils.merge(this.params, new HashMap<String,Object>(params));
+        return getThis();
+    }
+
+    T setParams(HashMap<String, Object> params){
+
+        this.params = params;
+        return getThis();
+    }
+
+    T body(String content){
 
         this.body = new StringBuilder(content);
         return getThis();
     }
 
+    void setRequestProperty(String key, String value) {
+        headers.put(key, value);
+    }
+
     public T  header(String key, String value) throws CookieParseException {
 
-        if (key.equals("Cookie")) {
-            try {
-                MapUtils.parse(cookies, value, ";", "=", forceValidateCookies);
-            } catch (ParseToMapException ptme){
-                throw new CookieParseException("Error parsing cookie through ';'. \n Chunk index: " + ptme.getErrorIndex() + ". Chunk: ".concat(ptme.getPart()).concat(".\nTo reduce the severity level turn off global cookie validation"));
-            }
-        }
-
-        http.setRequestProperty(key, value);
+        if (key.equals("Cookie"))
+            sanitizeCookie(value);
+        setRequestProperty(key, value);
         return getThis();
     }
 
+    protected void sanitizeCookie( String value){
+
+        try {
+            MapUtils.parse(cookies, value, ";", "=", forceValidateCookies);
+        } catch (ParseToMapException ptme){
+            throw new CookieParseException("Error parsing cookie through ';'. \n Chunk index: " + ptme.getErrorIndex() + ". Chunk: ".concat(ptme.getPart()).concat(".\nTo reduce the severity level turn off global cookie validation"));
+        }
+
+    }
 
     public T cookie(String key, String value){
 
@@ -231,20 +322,24 @@ abstract class GenericRequest<T extends GenericRequest> {
 
 
 
-    public T readTimeout(int sec){
-
-        http.setReadTimeout(1000*sec);
-
+    /**
+     * Due to GET request behavior this method just cache this value. Finally injected at fetch stage
+     * @param sec
+     * @return
+     */
+    public T readTimeout(int sec) {
+        this.readTimeout = sec;
         return getThis();
-
     }
 
-    public T connectTimeout(int sec){
-
-        http.setConnectTimeout(1000*sec);
-
+    /**
+     * Due to GET request behavior this method just cache this value. Finally injected at fetch stage
+     * @param sec
+     * @return
+     */
+    public T connectTimeout(int sec) {
+        this.connectTimeout = sec;
         return getThis();
-
     }
 
     public T timeout(int sec){
@@ -271,35 +366,38 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     }
 
-
+    /**
+     * Fail silently with bad http codes
+     * @return
+     */
     public T suppressFail(){
 
-        this.supressHttpFail = true;
+        this.suppressHttpFail = true;
         return getThis();
     }
 
-    private void finalizeBuild() throws IOException {
+    private void prepareMeta() throws IOException {
 
-        header("Content-Length", body.length() + "");
+        // migrate user attached headers to request object
 
-        if (http.getRequestProperty("Accept-Encoding") == null) {
-            acceptEncoding("gzip");
-           // withReader(GZIPInputStream.class);
+        if ( method != Method.GET)
+            header("Content-Length", body.length() + "");
+
+        if (headers.get("Accept-Encoding") == null) {
+            acceptEncoding("gzip"); // at the end auto injects available appropriate stream
         }
 
         if (cookies.size() > 0)
             header("Cookie", MapUtils.join(cookies, ";", "="));
-        if (debug)
-            for (Map.Entry<String, List<String>> item: http.getRequestProperties().entrySet()){
 
-                System.out.println(item.getKey() + ": " + Utils.join(item.getValue(), " ; "));
-            }
+
+    }
+
+
+    private void finalHooks(){
 
         if (printRawAtTheEnd)
             System.out.println(toString());
-
-        if (http.getDoOutput())
-            Utils.write(http.getOutputStream(), new ByteArrayInputStream(body.toString().getBytes("UTF-8")));
 
     }
 
@@ -310,17 +408,24 @@ abstract class GenericRequest<T extends GenericRequest> {
 
 
 
-    ByteArrayOutputStream fetchBytes() throws IOException, BadHTTPStatusException {
+    protected ByteArrayOutputStream fetchBytes() throws IOException, BadHTTPStatusException {
+
+        // TODO have to solve efficient policy for large bytes read and write?
+
+        pack(); // pack request data
+        prepareMeta(); // meta headers etc.
+        setupConnection(); // now we ready to connect
+
+        finalHooks(); // just callbacks log and etc.
 
 
-        // TODO have to solve efficient policy for large bytes read and write?.
+        int status;
 
-        finalizeBuild();
-        int status = -1;
         try {
             status = http.getResponseCode(); // force connect
         } catch (Exception e){
 
+            e.printStackTrace();
             throw new ConnectException("Cannot connect to  " +http.getURL().toString() + "." +
                     " Probably server does not respond. Maybe proxy prevents connection?");
         }
@@ -330,7 +435,7 @@ abstract class GenericRequest<T extends GenericRequest> {
 
             InputStream inputStream = http.getInputStream();
 
-            if (http.getContentEncoding() != null){
+            if (http.getContentEncoding() != null){ // auto injected or user defined stream for decoding data
 
                 Class decorator = resolveDecoder();
 
@@ -348,7 +453,7 @@ abstract class GenericRequest<T extends GenericRequest> {
 
             if (errorStream == null) {
 
-                 if (supressHttpFail)
+                 if (suppressHttpFail)
                      return new ByteArrayOutputStream(0);
                  throw new BadHTTPStatusException(status, "");
             }
@@ -363,7 +468,7 @@ abstract class GenericRequest<T extends GenericRequest> {
             }
 
             ByteArrayOutputStream bos = Utils.read(errorStream);
-            if (supressHttpFail)
+            if (suppressHttpFail)
                 return bos;
             throw new BadHTTPStatusException(status, new String(bos.toByteArray(), "UTF-8"));
         }
@@ -465,6 +570,25 @@ abstract class GenericRequest<T extends GenericRequest> {
     }
 
 
+    /**
+     * Build form params with url encoder.
+     * @param params
+     * @return
+     * @throws UnsupportedEncodingException
+     */
+    String constructParams(HashMap<String, String> params) throws UnsupportedEncodingException {
+
+        List<String> paramPairs = new ArrayList<String>();
+        for (Map.Entry<String, String> paramPair : params.entrySet()) {
+
+            paramPairs.add(URLEncoder.encode(paramPair.getKey(), "UTF-8").concat("=").concat(URLEncoder.encode(paramPair.getValue(), "UTF-8")));
+        }
+
+
+        String concated = Utils.join(paramPairs, "&");
+        return concated;
+
+    }
     @Override
     public String toString() {
 
@@ -472,37 +596,51 @@ abstract class GenericRequest<T extends GenericRequest> {
         URL url = http.getURL();
         String port = "" + (url.getPort() == -1 ? 80: url.getPort()); // Todo verify
 
-        raw.append("\nName: ").append(name).append("\n\n  ");
+        raw.append("\nName: ").append(name).append("  >>> \n\n");
 
+        String queryParams = url.getQuery() == null ? "" : "?".concat(url.getQuery());
         //Request line Todo protocol version
-        raw.append(method.name()).append(" ").append(http.getURL().getPath()).append(" ").append(url.getProtocol().toUpperCase().replace("S", "") +"/1.1").append("\n  ");
+        raw.append(method.name()).append(" ").append(url.getPath()).append(queryParams).append(" ").append(url.getProtocol().toUpperCase().replace("S", "") +"/1.1").append("\n");
 
         //Host
-        raw.append("Host: ").append(url.getHost().concat(":".concat(port))).append("\n  ");
-        try {
-            buildBody();
-        } catch (IOException ioe){
-
-            throw new RuntimeException("Cannot build body.".concat(ioe.getMessage()) );
-        }
-        raw.append(MapUtils.join(http.getRequestProperties(), "\n  ", ": ", "; ", "Cookie"))
+        raw.append("Host: ").append(url.getHost().concat(":".concat(port))).append("\n");
+        raw.append(MapUtils.join( headers, "\n", ": ","Cookie"))
                 .append(cookies.size() > 0 ? " Cookie: ": "" )
                 .append(MapUtils.join(cookies,"; ", "=").concat("\n\n"))
-                .append(body.toString().replaceAll("(?m)^", "  ").concat("\n"));
+                .append(body.toString().replaceAll("(?m)^", "").concat("\n"));
 
         raw.append("\n-----");
 
         return  raw.toString();
     }
 
-    protected void buildBody() throws IOException{
+    private void migrateHeaders(){
 
-        //
+
+        for (Map.Entry<String, String> entry: headers.entrySet()) {
+            http.setRequestProperty(entry.getKey(), entry.getValue());
+        }
+
+    }
+
+
+    /**
+     * By default this method builds only GET Params. Subclasses override and must call super to both collect get params and post etc.
+     * @throws IOException
+     */
+    protected void pack() throws IOException{
+
+        if (queryParams != null && queryParams.size() > 0) {
+            String transformed = constructParams(queryParams);
+            URL url = new URL(this.url);
+            boolean paramsExist = url.getQuery() != null;
+            this.url = this.url.concat(paramsExist ? "&" :"?").concat(transformed);
+        }
     }
 
 /*    /**
      * Print raw request String. Used to considering that final stage has own changes to request.
-     * @param late Print now  or late (final build stage)
+     * @param late Print now  or late (final pack stage)
      * @return
      *//*
     public T snapshot(boolean late){

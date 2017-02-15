@@ -3,7 +3,6 @@ package com.restnet.irequest.request;
 
 
 import com.restnet.irequest.exception.BadHTTPStatusException;
-import com.restnet.irequest.exception.BodyNotWritableException;
 import com.restnet.irequest.exception.FileRelocationException;
 import com.restnet.irequest.utils.MapUtils;
 import com.restnet.irequest.utils.Utils;
@@ -15,11 +14,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  *
@@ -27,7 +23,7 @@ import java.util.Random;
 public class MultipartRequest extends GenericRequest<MultipartRequest> {
 
 
-    HashMap<String, String> params = new HashMap<String, String>();
+
     HashMap<String, File> files = new HashMap<String, File>();
     String charset;
     private  final String boundary;
@@ -39,10 +35,10 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
      *  Only for converting to other requests multipart  purpose
      * @param r
      */
-    protected MultipartRequest(FormRequest r, String charset){
+    protected MultipartRequest(FormRequest r, String charset)  {
 
-        super(r.http, r.url, r.method,  r.body, r.name, r.printRawAtTheEnd);
-        this.params = r.params;
+        super(r.http, r.url, r.method,  r.body, r.name, r.userStreamDecoratorClazz, r.printRawAtTheEnd, r.suppressHttpFail);
+        this.params = new HashMap<String, Object>(r.params);
         this.charset = charset;
 
 
@@ -68,13 +64,6 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
 
     }
 
-
-    public MultipartRequest param(String name, String value){
-
-        params.put(name, value);
-        return this;
-    }
-
     @Override
     public MultipartRequest header(String key, String value) {
         // ignore content types because based upon
@@ -84,7 +73,7 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
         return this;
     }
 
-    public MultipartRequest body(String content)throws BodyNotWritableException {
+    public MultipartRequest body(String content){
         super.body(content);
         return getThis();
     }
@@ -121,19 +110,16 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
         return this;
     }
 
-    public MultipartRequest params(HashMap<String, String> params){
-
-        this.params = params;
-        return this;
-    }
 
 
-    protected void buildBody() throws IOException {
 
+    protected void pack() throws IOException {
 
-        for (Map.Entry<String, String> pair: params.entrySet()){
+        super.pack();
 
-            body.append(toMultipartField(pair.getKey(), pair.getValue()));
+        for (Map.Entry<String, Object> pair: params.entrySet()){
+
+            body.append(toMultipartField(pair.getKey(), (String)pair.getValue()));
         }
 
         for (Map.Entry<String, File> pair: files.entrySet()){
@@ -147,6 +133,9 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
             System.out.println("Builded multipart.");
             System.out.println(body.toString());
         }
+
+
+
     }
 
 
@@ -200,7 +189,6 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
     public String fetch() throws IOException, BadHTTPStatusException {
 
 
-        buildBody();
         return super.fetch();
     }
 }

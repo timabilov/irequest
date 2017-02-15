@@ -5,6 +5,7 @@ import com.restnet.irequest.utils.Utils;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class Response {
 
         FileOutputStream fos = new FileOutputStream(new File(fileName), append);
 
-        Utils.write(fos, new ByteArrayInputStream(requestName.concat("\n\n").concat(rawHeaders()).concat("\n").getBytes("UTF-8")));
+        Utils.write(fos, new ByteArrayInputStream(requestName.concat(new Date().toString()).concat("\n\n").concat(rawHeaders()).concat("\n").getBytes("UTF-8")));
         return this;
     }
 
@@ -89,8 +90,8 @@ public class Response {
 
     public Response printHeaders() {
 
-        System.out.print("\n");
 
+        System.out.print(new Date().toString() + "   <<<\n\n");
         System.out.println(rawHeaders());
         return this;
     }

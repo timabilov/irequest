@@ -93,7 +93,7 @@ public class Utils {
     public static ByteArrayOutputStream read(InputStream inputStream) throws IOException {
         String str = "";
         byte[] data;
-        try (InputStream is = inputStream) {
+        try (InputStream is = new BufferedInputStream(inputStream)) {
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             byte[] buffer = new byte[2048];
@@ -129,18 +129,19 @@ public class Utils {
     public static  void write(OutputStream outputStream, InputStream is) throws IOException {
         String str = "";
         byte[] buffer = new byte[2048];
-        int readed = is.read(buffer);
+        BufferedInputStream bis = new BufferedInputStream(is);
+        int readed = bis.read(buffer);
 
         try (OutputStream os = outputStream) {
             while (readed != -1) {
 
                 os.write(buffer, 0 , readed);
-                readed = is.read(buffer);
+                readed = bis.read(buffer);
             }
 
         }
 
-        is.close();
+        bis.close();
     }
 
     // TODO log and good handle

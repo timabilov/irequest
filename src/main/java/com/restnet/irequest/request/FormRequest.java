@@ -1,18 +1,11 @@
 package com.restnet.irequest.request;
 
-import com.restnet.irequest.exception.BadHTTPStatusException;
-import com.restnet.irequest.exception.BodyNotWritableException;
-import com.restnet.irequest.utils.Utils;
+import com.restnet.irequest.utils.MapUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Utility class inherited from Request to work with directly 'multipart/form-data' and put appropriate parameters convenient way.
@@ -21,8 +14,6 @@ import java.util.Map;
  */
 
 public class FormRequest extends GenericRequest<FormRequest> {
-
-    HashMap<String, String> params = new HashMap<String, String>();
 
 
     protected FormRequest(String urlRaw) throws MalformedURLException, IOException {
@@ -47,7 +38,7 @@ public class FormRequest extends GenericRequest<FormRequest> {
     }
 
 
-    public FormRequest body(String content)throws BodyNotWritableException{
+    public FormRequest body(String content){
         super.body(content);
         return getThis();
     }
@@ -73,16 +64,10 @@ public class FormRequest extends GenericRequest<FormRequest> {
      */
     public MultipartRequest param(String name, File file){
 
-        ;
-        return multipart("UTF-8").params(params).param(name, file);
+
+        return multipart("UTF-8").setParams(params).param(name, file);
 
     }
-
-    public FormRequest params(HashMap<String, String > params){
-        this.params = params;
-        return this;
-    }
-
 
     /**
      *  Converts form request to multipart with passed form params and headers
@@ -91,30 +76,21 @@ public class FormRequest extends GenericRequest<FormRequest> {
 
     public MultipartRequest multipart(String charset) {
 
-        return new MultipartRequest(this, charset).params(params);
+        return new MultipartRequest(this, charset).setParams(params);
 
     }
 
 
-    protected void buildBody() throws UnsupportedEncodingException {
+    protected void pack() throws IOException {
+
+        super.pack();
+
         if (params != null && params.size() > 0) {
-            List<String> paramPairs = new ArrayList<String>();
-            for (Map.Entry<String, String> paramPair : params.entrySet()) {
+            String transformed = constructParams(MapUtils.stringify(params));
 
-                paramPairs.add(URLEncoder.encode(paramPair.getKey(), "UTF-8").concat("=").concat(URLEncoder.encode(paramPair.getValue(), "UTF-8")));
-            }
-
-
-            String concated = Utils.join(paramPairs, "&");
-
-            body = new StringBuilder(concated);
+            body = new StringBuilder(transformed);
         }
+
     }
 
-    @Override
-    public String fetch() throws IOException, BadHTTPStatusException {
-
-        buildBody();
-        return super.fetch();
-    }
 }

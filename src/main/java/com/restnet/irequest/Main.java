@@ -2,7 +2,7 @@ package com.restnet.irequest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.restnet.irequest.exception.BadHTTPStatusException;
-import com.restnet.irequest.exception.BodyNotWritableException;
+import com.restnet.irequest.exception.CookieParseException;
 import com.restnet.irequest.request.Method;
 import com.restnet.irequest.request.Request;
 import com.restnet.irequest.utils.MapUtils;
@@ -21,7 +21,9 @@ public class Main {
         try {
 
 
-            Request.get("https://www.google.az/favicon.ico")
+            Request.get("https://www.google.az/favicon.ico?key=initial")
+                    .arg("key2", "additional") // url args
+                    .snapshot()
                     .pipe("favicon.ico");
 
 
@@ -44,11 +46,13 @@ public class Main {
 
             Request.post("http://www.posttestserver.com/post.php")
                     .header("Header", "Header-Value")
-                    .param("formParam", "formValue'")
-                    .pipe("post.json");
+                    .param("formParam", "formValue")
+                    .arg("urlParam", "UrlValue")
+                    .snapshot()
+                    .pipe("post.txt");
 
             result = Request.post("http://www.posttestserver.com/post.php")
-                    //.proxy("112.214.73.253", 80) no need because of  previous global settings
+                    //.proxy("112.214.73.253", 80)
                     .param("phone", "+994XXYYYYYYY")
                     .param("id", "123456")
                     .param("file", new File("C:/Finish.log")) // Upload file. Implicitly casts to multipart(!).
@@ -62,12 +66,6 @@ public class Main {
                     .timeout(10) //read and connect timeout
                     .fetchJson(); // result as json node
 
-
-            json = Request.get("http://httpbin.org/basic-auth/username/password123")
-                    .basicAuth("username", "password123")
-                    .timeout(10)
-                    .fetchJson();
-
             Request.json("http://httpbin.org:80/put", Method.PUT)
                     .param("key", "value")
                     .pipe("put.json");
@@ -75,8 +73,8 @@ public class Main {
 
 
             Request.get("http://httpbin.org/status/fake") // return 500
-                    .suppressFail() //  No exception will be thrown at fail. Instead error body will be considered with response
-                    .timeout(10) //read and connect timeout
+                    .suppressFail() //  Fail silently with bad http codes. No exception will be thrown. Instead error body will be considered with response
+                    .timeout(10)
                     .pipe("failed.html");
 
             Request.get("http://httpbin.org/gzip")  // supports gzipped content
@@ -84,7 +82,8 @@ public class Main {
 
 
 
-            Request.get("http://httpbin.org/response-headers?key=val") //
+            Request.get("http://httpbin.org/response-headers")
+                    .arg("arg", "argValue")
                     .send()
                     .dump("log.txt", true) // appends log/dump response metadata
                     .store("response.json")
@@ -98,27 +97,34 @@ public class Main {
                     .snapshot()
                     .fetch();
 
+            try {
+                result = Request.get("http://httpbin.org:80/cookies")
+                        .header("Cookie", "UnparseableCookie;;;") // throws CookieParseException. By default validated.
+                        .snapshot()
+                        .fetch();
+            } catch (CookieParseException cpe){
 
+                cpe.printStackTrace();
+            }
+
+            Request.skipCookieValidation(false);
 
             result = Request.get("http://httpbin.org:80/cookies")
-                    .header("Cookie","UnparseableCookie;;;") // throws CookieParseException. By default cookie validated and parsed. May be turned off
+
+                    .header("Cookie", "UnparseableCookie;;;") // throws CookieParseException. By default cookie validated and parsed. May be turned off
                     .snapshot()
                     .fetch();
-
-
 
             System.out.println(result);
 
         } catch (IOException ioe){
 
-            System.err.println("I/O exception");
+            System.err.println("I/O exception!");
             System.err.println(ioe);
         } catch (BadHTTPStatusException bhs) {
 
             System.err.printf(bhs.getMessage());
 
-        } catch (BodyNotWritableException e) {
-            e.printStackTrace();
         }
     }
 }

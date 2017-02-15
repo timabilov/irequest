@@ -1,12 +1,9 @@
 package com.restnet.irequest.request;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restnet.irequest.exception.BadHTTPStatusException;
-import com.restnet.irequest.exception.BodyNotWritableException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 
@@ -16,11 +13,11 @@ import java.util.HashMap;
 public class JsonRequest extends GenericRequest<JsonRequest> {
 
 
-    HashMap<String, Object> json = new HashMap<String, Object>();
 
 
-    protected JsonRequest(GenericRequest r){
-        super(r.http, r.url, r.method,  r.body, r.name, r.printRawAtTheEnd);
+
+    protected JsonRequest(GenericRequest r)  {
+        super(r.http, r.url, r.method,  r.body, r.name, r.userStreamDecoratorClazz, r.printRawAtTheEnd, r.suppressHttpFail);
 
         super.header("Content-Type", "application/json");
     }
@@ -46,42 +43,43 @@ public class JsonRequest extends GenericRequest<JsonRequest> {
         return this;
     }
 
-    public JsonRequest body(String content)throws BodyNotWritableException {
+    public JsonRequest body(String content) {
         super.body(content);
         return getThis();
     }
 
     public JsonRequest with(HashMap<String, Object> json){
 
-        this.json = json;
+        this.params = json;
         return this;
     }
 
 
-    protected void buildBody() throws JsonProcessingException {
+    protected void pack() throws IOException {
+
+
+        super.pack();
 
         ObjectMapper mapper = new ObjectMapper();
-        String rawJson = mapper.writeValueAsString(json);
+        String rawJson = mapper.writeValueAsString(params);
         this.body = new StringBuilder(rawJson);
-
 
     }
 
     public JsonRequest param(String key, Object value){
 
-        json.put(key, value);
+        params.put(key, value);
         return this;
 
     }
 
     public HashMap<String, Object> getParams(){
 
-        return this.json;
+        return this.params;
     }
 
     @Override
     public String fetch() throws IOException, BadHTTPStatusException {
-        buildBody();
         return super.fetch();
     }
 }
