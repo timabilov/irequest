@@ -23,7 +23,7 @@ abstract class GenericRequest<T extends GenericRequest> {
     HashMap<String, String> queryParams = new HashMap<String, String>();
 
     private static boolean isProxyGlobal = false;
-    private static boolean forceValidateCookies = true;
+    private static boolean skipCookieValidation = true;
 
     int readTimeout = -1;
     int connectTimeout = -1;
@@ -156,7 +156,7 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     public static void skipCookieValidation(boolean skip){
 
-        forceValidateCookies = skip;
+        skipCookieValidation = skip;
     }
 
 
@@ -239,7 +239,7 @@ abstract class GenericRequest<T extends GenericRequest> {
     protected void sanitizeCookie( String value){
 
         try {
-            MapUtils.parse(cookies, value, ";", "=", forceValidateCookies);
+            MapUtils.parse(cookies, value, ";", "=", !skipCookieValidation); // force strict if we not want skip cookie validation
         } catch (ParseToMapException ptme){
             throw new CookieParseException("Error parsing cookie through ';'. \n Chunk index: " + ptme.getErrorIndex() + ". Chunk: ".concat(ptme.getPart()).concat(".\nTo reduce the severity level turn off global cookie validation"));
         }

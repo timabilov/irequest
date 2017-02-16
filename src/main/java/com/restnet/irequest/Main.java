@@ -107,7 +107,7 @@ public class Main {
                 cpe.printStackTrace();
             }
 
-            Request.skipCookieValidation(false);
+            Request.skipCookieValidation(true);
 
             result = Request.get("http://httpbin.org:80/cookies")
 
