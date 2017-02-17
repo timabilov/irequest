@@ -140,7 +140,7 @@ public class Main {
 
             result = Request.get("http://httpbin.org:80/cookies")
 
-                    .header("Cookie", "UnparseableCookie;;;") // throws CookieParseException. By default cookie validated and parsed. May be turned off
+                    .header("Cookie", "UnparseableCookie;;;") // now allowed
                     .snapshot()
                     .fetch();
 
