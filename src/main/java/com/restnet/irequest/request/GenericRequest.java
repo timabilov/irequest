@@ -94,6 +94,10 @@ abstract class GenericRequest<T extends GenericRequest> {
 
         this(null, urlRaw, method, new StringBuilder(), "Plain request", null, false, false);
 
+        if (!url.replace("s", "").startsWith("http://") ){ // drop s from https(if) and check for scheme
+            this.url = "http://" + this.url;
+        }
+
         String queryParams = new URL(url).getQuery();
 
 
@@ -102,6 +106,11 @@ abstract class GenericRequest<T extends GenericRequest> {
             MapUtils.parse(this.queryParams, queryParams,"&", "=", false);
         }
 
+        if (!isProxyGlobal)
+            setJVMProxyServer("", 0, false); // reset
+
+
+
 
 
     }
@@ -109,9 +118,7 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     protected void setupConnection() throws IOException {
 
-        if (!url.replace("s", "").startsWith("http://") ){ // drop s from https(if) and check for scheme
-            this.url = "http://" + this.url;
-        }
+
 
         URL url = new URL(this.url);
         http = ((HttpURLConnection)url.openConnection());
@@ -122,10 +129,7 @@ abstract class GenericRequest<T extends GenericRequest> {
         http.setRequestProperty("User-Agent" , "iRequest Agent");
         http.setRequestMethod(method.name());
 
-        if (!isProxyGlobal)
-            setJVMProxyServer("", 0, false); // reset
-
-        if (readTimeout > 0)
+         if (readTimeout > 0)
             http.setReadTimeout(readTimeout*1000);
         if (connectTimeout > 0)
             http.setConnectTimeout(connectTimeout*1000);
@@ -142,13 +146,13 @@ abstract class GenericRequest<T extends GenericRequest> {
 
         if (!isSOCKS) {
             System.setProperty("http.proxyHost", host);
-            System.setProperty("http.proxyPort", port + "");
+            System.setProperty("http.proxyPort", (port == -1 ? "":port)  + "");
             System.setProperty("https.proxyHost", host);
-            System.setProperty("https.proxyPort", port + "");
+            System.setProperty("https.proxyPort", (port == -1 ? "":port) + "");
         } else {
 
             System.setProperty("socksProxyHost", host);
-            System.setProperty("SocksProxyPort", port + "");
+            System.setProperty("socksProxyPort", (port == -1 ? "":port) + "");
 
         }
 
@@ -304,6 +308,16 @@ abstract class GenericRequest<T extends GenericRequest> {
     public T proxy(String host, int port){
 
         setJVMProxyServer(host, port, false);
+
+
+        return getThis();
+    }
+
+
+    public T proxy(String host, int port, boolean save){
+
+        setJVMProxyServer(host, port, false);
+        isProxyGlobal = save;
 
 
         return getThis();
@@ -521,17 +535,17 @@ abstract class GenericRequest<T extends GenericRequest> {
         FileOutputStream fos = new FileOutputStream(new File(filename));
 
         Utils.write(fos, new ByteArrayInputStream(fetchBytes().toByteArray()));
-
+        fos.close();
     }
 
 
     public void pipe(OutputStream os) throws FileNotFoundException, IOException, BadHTTPStatusException {
 
-
-
-
-
         Utils.write(os, new ByteArrayInputStream(fetchBytes().toByteArray()));
+
+        if (os != System.out){
+            os.close();
+        }
 
     }
 
@@ -589,6 +603,7 @@ abstract class GenericRequest<T extends GenericRequest> {
         return concated;
 
     }
+
     @Override
     public String toString() {
 

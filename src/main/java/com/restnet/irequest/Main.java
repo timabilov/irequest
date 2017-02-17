@@ -20,29 +20,46 @@ public class Main {
 
         try {
 
-
             Request.get("https://www.google.az/favicon.ico?key=initial")
                     .arg("key2", "additional") // url args
-                    .snapshot()
+                    .snapshot() // prints request before send
                     .pipe("favicon.ico");
 
 
             Request.get("https://www.google.az/")
-                    .header("User-Agent", "iRequest Agent")
-                    .snapshot() // prints request before send
-                    //.proxy("112.214.73.253", 80)
+                    .header("User-Agent", "iRequest Agent") // it's default user-agent
+                    .snapshot()
                     .send() // Response object
                     .printHeaders()
                     .store("google.html");
 
 
+
+            Request.get("http://httpbin.org/ip")
+                    .snapshot() // prints request before send
+                    .proxy("27.48.5.68", 8080)
+                    .pipe(System.out);
+
+
+
             String result = Request.post("http://www.posttestserver.com/post.php")
-                    //.proxy("112.214.73.253", 80)
+                    .proxy("27.48.5.68", 8080, true) // you can save like this - or down below
+                    .saveProxy()  // save session proxy settings globally until overwritten
                     .param("name", "John")
                     .jsonify() // previous params also converted to json
                     .param("jsonKey", MapUtils.mapOf("nestedKey", "nestedValue"))
-                    .saveProxy()  // save session proxy settings globally until overwritten
                     .fetch(); // finally fires and gets result immediately
+
+
+            Request.get("httpbin.org/ip")
+                    .pipe(System.out); // Prints last saved proxy
+
+
+            Request.setJVMProxyServer("", -1, false); //reset global proxy
+
+
+            Request.get("httpbin.org/ip")
+                    .pipe(System.out); // Prints our origin.
 
             Request.post("http://www.posttestserver.com/post.php")
                     .header("Header", "Header-Value")

@@ -91,25 +91,21 @@ public class Utils {
 
 
     public static ByteArrayOutputStream read(InputStream inputStream) throws IOException {
-        String str = "";
-        byte[] data;
-        try (InputStream is = new BufferedInputStream(inputStream)) {
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            byte[] buffer = new byte[2048];
-
-            int read = is.read(buffer);
-            while ( read != -1 ) {
-
-                bos.write(buffer,0, read);
-                read = is.read(buffer);
-            }
-
-            return bos;
+        BufferedInputStream is = new BufferedInputStream(inputStream);
 
 
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[2048];
 
+        int read = is.read(buffer);
+        while ( read != -1 ) {
+
+            bos.write(buffer,0, read);
+            read = is.read(buffer);
         }
+        bos.flush();
+        return bos;
 
 
     }
@@ -130,18 +126,20 @@ public class Utils {
         String str = "";
         byte[] buffer = new byte[2048];
         BufferedInputStream bis = new BufferedInputStream(is);
+        BufferedOutputStream os = new BufferedOutputStream(outputStream);
         int readed = bis.read(buffer);
 
-        try (OutputStream os = outputStream) {
-            while (readed != -1) {
 
-                os.write(buffer, 0 , readed);
-                readed = bis.read(buffer);
-            }
+        while (readed != -1) {
 
+            os.write(buffer, 0 , readed);
+            readed = bis.read(buffer);
         }
 
-        bis.close();
+
+
+
+        os.flush();
     }
 
     // TODO log and good handle
