@@ -55,7 +55,7 @@ public class Main {
                     .pipe(System.out); // Prints last saved proxy
 
 
-            Request.setJVMProxyServer("", -1, false); //reset global proxy
+            Request.forgetProxy(); //reset global proxy
 
 
             Request.get("httpbin.org/ip")

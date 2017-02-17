@@ -141,6 +141,10 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     }
 
+    public static void forgetProxy(){
+
+        isProxyGlobal = false;
+    }
 
     public static void setJVMProxyServer(String host, int port, boolean isSOCKS){
 
