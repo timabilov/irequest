@@ -130,9 +130,9 @@ abstract class GenericRequest<T extends GenericRequest> {
         http.setRequestMethod(method.name());
 
          if (readTimeout > 0)
-            http.setReadTimeout(readTimeout*1000);
+            http.setReadTimeout(readTimeout);
         if (connectTimeout > 0)
-            http.setConnectTimeout(connectTimeout*1000);
+            http.setConnectTimeout(connectTimeout);
 
         migrateHeaders();
 
@@ -346,7 +346,7 @@ abstract class GenericRequest<T extends GenericRequest> {
      * @return
      */
     public T readTimeout(int sec) {
-        this.readTimeout = sec;
+        this.readTimeout = 1000*sec;
         return getThis();
     }
 
@@ -356,7 +356,7 @@ abstract class GenericRequest<T extends GenericRequest> {
      * @return
      */
     public T connectTimeout(int sec) {
-        this.connectTimeout = sec;
+        this.connectTimeout = 1000*sec;
         return getThis();
     }
 
@@ -678,5 +678,62 @@ abstract class GenericRequest<T extends GenericRequest> {
         printRawAtTheEnd = true;
         //System.out.println(toString());
         return getThis();
+    }
+
+
+    public HashMap<String, Object> getParams() {
+        return params;
+    }
+
+    public HashMap<String, String> getQueryParams() {
+        return queryParams;
+    }
+
+    public static boolean isSkipCookieValidation() {
+        return skipCookieValidation;
+    }
+
+    public int getReadTimeout() {
+        return readTimeout;
+    }
+
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public HashMap<String, String> getHeaders() {
+        return headers;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public Method getMethod() {
+        return method;
+    }
+
+    public StringBuilder getBody() {
+        return body;
+    }
+
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public boolean isPrintRawAtTheEnd() {
+        return printRawAtTheEnd;
+    }
+
+    public boolean isSuppressHttpFail() {
+        return suppressHttpFail;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Class getUserStreamDecoratorClazz() {
+        return userStreamDecoratorClazz;
     }
 }
