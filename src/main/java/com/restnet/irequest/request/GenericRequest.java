@@ -126,7 +126,6 @@ abstract class GenericRequest<T extends GenericRequest> {
             http.setDoOutput(true);
         http.setDoInput(true); // just explicit
         http.setUseCaches(false);
-        http.setRequestProperty("User-Agent" , "iRequest Agent");
         http.setRequestMethod(method.name());
 
          if (readTimeout > 0)
@@ -397,11 +396,13 @@ abstract class GenericRequest<T extends GenericRequest> {
     private void prepareMeta() throws IOException {
 
         // migrate user attached headers to request object
+        if (!(headers.containsKey("User-Agent") || headers.containsKey("user-agent")))
+            header("User-Agent" , "iRequest Agent");
 
         if ( method != Method.GET)
             header("Content-Length", body.length() + "");
 
-        if (headers.get("Accept-Encoding") == null) {
+        if (!(headers.containsKey("Accept-Encoding") || headers.containsKey("accept-ecoding"))){
             acceptEncoding("gzip"); // at the end auto injects available appropriate stream
         }
 
