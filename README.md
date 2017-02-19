@@ -1,6 +1,6 @@
 # iRequest
-###The Thinnest HTTP Client ***based on native HttpURLConnection*** provides you - wraps all functionality in soft manner with fluent-like interface.
- 
+Thinnest HTTP Client ***based on native HttpURLConnection*** provides you - wraps all functionality in soft manner with fluent-like interface.
+
 This client abstracts you from all boilerplate that you write within native API i.e. Intended to use due to  DRY pain of native API  which many of us encounter's i think) 
 
  
