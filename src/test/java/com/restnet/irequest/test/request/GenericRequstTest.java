@@ -44,7 +44,6 @@ public class GenericRequstTest {
 
 
         Response response = r.send();
-        System.out.println(r.getHeaders());
         assertEquals(r.getHeaders().get("User-Agent"), "iRequest Agent");
         assertTrue(response.getHeaders().size() > 0);
         assertTrue(response.getBody().length() > 0);
@@ -114,15 +113,14 @@ public class GenericRequstTest {
 
 
 
-        JsonNode expectedHeaders = r.snapshot().fetchJson();
+        JsonNode expectedHeaders = r.fetchJson();
 
-        System.out.println(expectedHeaders);
         assertTrue(expectedHeaders.size() > 0);
         assertNotNull(expectedHeaders.get("headers").get("Key1"));
-        assertEquals(expectedHeaders.get("headers").get("Key1").textValue(), "Value2");
+        assertEquals("Value2", expectedHeaders.get("headers").get("Key1").textValue());
 
         assertNotNull(expectedHeaders.get("headers").get("Key2"));
-        assertEquals(expectedHeaders.get("headers").get("Key2").textValue(), "Value3");
+        assertEquals("Value3", expectedHeaders.get("headers").get("Key2").textValue());
     }
 
 
@@ -151,8 +149,8 @@ public class GenericRequstTest {
         assertNotNull(node.get("args"));
         assertNotNull(node.get("args").get("arg1"));
         assertNotNull(node.get("args").get("arg2"));
-        assertEquals(node.get("args").get("arg1").textValue(), "value");
-        assertEquals(node.get("args").get("arg2").textValue(), "value2");
+        assertEquals("value", node.get("args").get("arg1").textValue());
+        assertEquals("value2", node.get("args").get("arg2").textValue());
 
     }
 
@@ -171,9 +169,9 @@ public class GenericRequstTest {
         assertNotNull(node.get("args").get("b"));
         assertNotNull(node.get("args").get("arg2"));
         assertNotNull(node.get("args").get("a"));
-        assertEquals(node.get("args").get("b").textValue(), "3");
-        assertEquals(node.get("args").get("arg2").textValue(), "value2");
-        assertEquals(node.get("args").get("a").textValue(), "4");
+        assertEquals("3", node.get("args").get("b").textValue());
+        assertEquals("value2", node.get("args").get("arg2").textValue() );
+        assertEquals("4", node.get("args").get("a").textValue() );
 
         r = Request.get("https://httpbin.org/get?a=4")
                 .arg("a", "5");
@@ -186,7 +184,7 @@ public class GenericRequstTest {
 
         assertNotNull(node.get("args").get("a"));
 
-        assertEquals(node.get("args").get("a").textValue(), "5");
+        assertEquals("5", node.get("args").get("a").textValue());
 
     }
 
@@ -201,8 +199,8 @@ public class GenericRequstTest {
         assertNotNull(r.get("form"));
         assertNotNull(r.get("form").get("param1"));
         assertNotNull(r.get("form").get("param2"));
-        assertEquals(r.get("form").get("param1").textValue(), "value1");
-        assertEquals(r.get("form").get("param2").textValue(), "value2");
+        assertEquals("value1", r.get("form").get("param1").textValue());
+        assertEquals("value2", r.get("form").get("param2").textValue());
 
 
     }
@@ -219,9 +217,8 @@ public class GenericRequstTest {
                 .fetchJson();
 
         JsonNode resultH = r.get("headers");
-        System.out.println(resultH);
         assertNotNull(resultH.get("Content-Type"));
-        assertEquals(resultH.get("Content-Type").textValue(), "application/x-www-form-urlencoded");
+        assertEquals("application/x-www-form-urlencoded", resultH.get("Content-Type").textValue() );
         assertNotNull(resultH.get("Content-Length"));
         assertTrue(Integer.parseInt(resultH.get("Content-Length").textValue()) > 0);
 
@@ -240,14 +237,14 @@ public class GenericRequstTest {
 
         assertNotNull(r.get("form").get("a"));
         assertNotNull(r.get("form").get("b"));
-        assertEquals(r.get("form").get("a").textValue(), "4");
-        assertEquals(r.get("form").get("b").textValue(), "2");
+        assertEquals("4", r.get("form").get("a").textValue());
+        assertEquals("2", r.get("form").get("b").textValue());
 
 
         assertNotNull(r.get("args").get("a"));
         assertNotNull(r.get("args").get("b"));
-        assertEquals(r.get("args").get("a").textValue(), "4");
-        assertEquals(r.get("args").get("b").textValue(), "3");
+        assertEquals("4", r.get("args").get("a").textValue());
+        assertEquals("3", r.get("args").get("b").textValue());
 
     }
 

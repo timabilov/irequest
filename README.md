@@ -1,7 +1,7 @@
 # iRequest
-###The Thinnest HTTP Client ***based on native HttpURLConnection*** provides you - wraps(easy abstraction)  all functionality in soft manner with fluent-like interface.
+###The Thinnest HTTP Client ***based on native HttpURLConnection*** provides you - wraps all functionality in soft manner with fluent-like interface.
  
-Intended to use due to  DRY pain of native API  which many of us encounter's i think) 
+This client abstracts you from all boilerplate that you write within native API i.e. Intended to use due to  DRY pain of native API  which many of us encounter's i think) 
 
  
 **DO NOT** supports get requests with body  because of specification and etc.
@@ -9,8 +9,6 @@ Intended to use due to  DRY pain of native API  which many of us encounter's i t
 http://stackoverflow.com/questions/18664413/can-i-do-an-http-get-and-include-a-body-using-httpurlconnection
 
 
-
-Easy to implement and build without additional http dependencies for anyone needs.
 
 
 ```java
