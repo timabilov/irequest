@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 abstract class GenericRequest<T extends GenericRequest> {
 
@@ -36,7 +38,8 @@ abstract class GenericRequest<T extends GenericRequest> {
     String url;
 
     Method method;
-
+    ResponseHandler rh = null;
+    ErrorResponseHandler erh = null;
     StringBuilder body = new StringBuilder();
 
     HashMap<String, String> cookies = new HashMap<String, String>();
@@ -493,7 +496,35 @@ abstract class GenericRequest<T extends GenericRequest> {
         }
 
     }
+    public T then(final ResponseHandler rh){
 
+        this.rh = rh;
+
+        new Thread(){
+
+            @Override
+            public void run() {
+                ResponseHandler responseHandler = GenericRequest.this.rh;
+                ErrorResponseHandler errorResponseHandler = GenericRequest.this.erh;
+                try{
+                    responseHandler.handle(send()); // send request take Response
+                } catch (Exception e){
+                    if (errorResponseHandler != null){
+                        errorResponseHandler.handle(e);
+                        return;
+                    }
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        return getThis();
+    }
+
+    public void error(ErrorResponseHandler errorResponseHandler){
+
+        this.erh = errorResponseHandler;
+    }
 
     private Class resolveDecoder(){
 

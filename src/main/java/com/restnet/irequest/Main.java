@@ -5,6 +5,8 @@ import com.restnet.irequest.exception.BadHTTPStatusException;
 import com.restnet.irequest.exception.CookieParseException;
 import com.restnet.irequest.request.Method;
 import com.restnet.irequest.request.Request;
+import com.restnet.irequest.request.Response;
+import com.restnet.irequest.request.ResponseHandler;
 import com.restnet.irequest.utils.MapUtils;
 
 import java.io.File;
@@ -19,6 +21,16 @@ public class Main {
     public static void main(String[] args)  {
 
         try {
+
+
+
+            Request.get("http://httpbin.org/headers")
+                    .then(new ResponseHandler() {
+                        public void handle(Response r) {
+                            System.out.println("Async fetch!");
+                            System.out.println(r.getBody());
+                        }
+                    });
 
             Request.get("https://www.google.az/favicon.ico?key=initial")
                     .arg("key2", "additional") // url args
