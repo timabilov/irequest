@@ -14,10 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
-abstract class GenericRequest<T extends GenericRequest> {
+public abstract class GenericRequest<T extends GenericRequest<T>> {
 
 
     HashMap<String, Object> params = new HashMap<String, Object>();
@@ -39,7 +37,6 @@ abstract class GenericRequest<T extends GenericRequest> {
 
     Method method;
     ResponseHandler rh = null;
-    ErrorResponseHandler erh = null;
     StringBuilder body = new StringBuilder();
 
     HashMap<String, String> cookies = new HashMap<String, String>();
@@ -446,8 +443,8 @@ abstract class GenericRequest<T extends GenericRequest> {
         try {
             status = http.getResponseCode(); // force connect
         } catch (Exception e){
-
-            e.printStackTrace();
+            if (rh == null) // check whether async handler took the error
+                e.printStackTrace();
             throw new ConnectException("Cannot connect to  " +http.getURL().toString() + "." +
                     " Probably server does not respond. Maybe proxy prevents connection?");
         }
@@ -496,7 +493,7 @@ abstract class GenericRequest<T extends GenericRequest> {
         }
 
     }
-    public T then(final ResponseHandler rh){
+    public void async(final ResponseHandler rh){
 
         this.rh = rh;
 
@@ -504,27 +501,19 @@ abstract class GenericRequest<T extends GenericRequest> {
 
             @Override
             public void run() {
-                ResponseHandler responseHandler = GenericRequest.this.rh;
-                ErrorResponseHandler errorResponseHandler = GenericRequest.this.erh;
+
                 try{
-                    responseHandler.handle(send()); // send request take Response
+                    rh.success(send()); // send request take Response
                 } catch (Exception e){
-                    if (errorResponseHandler != null){
-                        errorResponseHandler.handle(e);
-                        return;
-                    }
-                    e.printStackTrace();
+                    rh.error(new BrokenRequestException(GenericRequest.this, e));
                 }
             }
         }.start();
 
-        return getThis();
+
     }
 
-    public void error(ErrorResponseHandler errorResponseHandler){
 
-        this.erh = errorResponseHandler;
-    }
 
     private Class resolveDecoder(){
 
@@ -638,6 +627,12 @@ abstract class GenericRequest<T extends GenericRequest> {
         String concated = Utils.join(paramPairs, "&");
         return concated;
 
+    }
+
+    T repair(){
+
+        this.http = null;
+        return getThis();
     }
 
     @Override

@@ -3,8 +3,11 @@ package com.restnet.irequest.request;
 /**
  * Created by iRequest on 2/25/2017.
  */
-public interface ResponseHandler {
+public abstract class ResponseHandler {
 
 
-    void handle(Response r);
+
+
+    abstract public void success(Response r);
+    abstract public void error(BrokenRequestException failedRequest);
 }

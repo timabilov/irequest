@@ -3,14 +3,12 @@ package com.restnet.irequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.restnet.irequest.exception.BadHTTPStatusException;
 import com.restnet.irequest.exception.CookieParseException;
-import com.restnet.irequest.request.Method;
-import com.restnet.irequest.request.Request;
-import com.restnet.irequest.request.Response;
-import com.restnet.irequest.request.ResponseHandler;
+import com.restnet.irequest.request.*;
 import com.restnet.irequest.utils.MapUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.zip.GZIPInputStream;
 
 /**
  *
@@ -24,14 +22,6 @@ public class Main {
 
 
 
-            Request.get("http://httpbin.org/headers")
-                    .then(new ResponseHandler() {
-                        public void handle(Response r) {
-                            System.out.println("Async fetch!");
-                            System.out.println(r.getBody());
-                        }
-                    });
-
             Request.get("https://www.google.az/favicon.ico?key=initial")
                     .arg("key2", "additional") // url args
                     .snapshot() // prints request before send
@@ -40,19 +30,55 @@ public class Main {
 
             Request.get("https://www.google.az/")
                     .header("User-Agent", "iRequest Agent") // it's default user-agent
-                    .snapshot()
+                    .snapshot() // prints request before send
                     .send() // Response object
                     .printHeaders()
                     .store("google.html");
 
-
-
             Request.get("http://httpbin.org/ip")
-                    .snapshot() // prints request before send
+                    .snapshot()
                     .proxy("27.48.5.68", 8080)
                     .pipe(System.out);
 
+            Request.get("http://httpbin.org/headers")
+                    .async(new ResponseHandler() {
 
+                        public void success(Response r) {
+                            System.out.println("Async fetch!");
+                            System.out.println(r.getBody());
+                        }
+
+                        public void error(BrokenRequestException failedRequest) {
+                            System.err.println("Sorry bro");
+                            System.out.println(failedRequest.getHeaders());
+
+                        }
+                    });
+
+            Request.get("http://httpbin.org/hidden-basic-auth/user/passwd")
+                    .async(new ResponseHandler() {
+
+                        public void success(Response r) {
+                            System.out.println(r.getBody());
+                        }
+
+                        public void error(BrokenRequestException failedRequest) {
+                            // you have to authorize
+                            System.out.println(failedRequest.getHeaders());
+
+                            try {
+                                failedRequest.repair()
+                                        .header("ThisHeaderChangesEverything", "Really")
+                                        .basicAuth("user", "passwd")
+                                        .pipe("repaired.json");
+
+                            } catch (Exception e){
+                                e.printStackTrace();
+                                System.out.println("Damn!");
+                            }
+
+                        }
+                    });
 
             String result = Request.post("http://www.posttestserver.com/post.php")
                     .proxy("27.48.5.68", 8080, true) // you can save like this - or down below
@@ -157,3 +183,10 @@ public class Main {
         }
     }
 }
+
+
+
+
+
+
+

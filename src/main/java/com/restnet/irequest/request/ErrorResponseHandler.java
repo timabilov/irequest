@@ -5,5 +5,5 @@ package com.restnet.irequest.request;
  */
 public interface ErrorResponseHandler{
 
-    void handle(Exception e);
+
 }
