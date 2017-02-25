@@ -136,9 +136,6 @@ public class Utils {
             readed = bis.read(buffer);
         }
 
-
-
-
         os.flush();
     }
 

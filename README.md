@@ -1,5 +1,5 @@
 # iRequest
-Thinnest HTTP Client ***based on native HttpURLConnection*** provides you - wraps all functionality in soft manner with fluent-like interface.
+Thinnest HTTP Client ***based on HttpURLConnection*** provides you - wraps all functionality in soft manner with fluent-like interface.
 
 This client abstracts you from all boilerplate that you write within native API i.e. Intended to use due to  DRY pain of native API  which many of us encounter's i think) 
 
@@ -35,6 +35,19 @@ Request.get("https://www.google.az/")
         .send() // Response object
         .printHeaders()
         .store("google.html");
+```
+
+Use `fetch()` to get result immediately. Also may use ` fetchJson()` instead. 
+
+```java
+JsonNode json  = Request.get("http://httpbin.org/basic-auth/username/password123")
+        .basicAuth("username", "password123")
+        .timeout(10) //read and connect timeout
+        .fetchJson(); // result as json node
+
+Request.json("http://httpbin.org:80/put", Method.PUT)
+        .param("key", "value")
+        .pipe("put.json");
 ```
 
 Fire requests asynchronously : 
@@ -83,18 +96,6 @@ Request.get("http://httpbin.org/hidden-basic-auth/user/passwd")
             }
         });
 ```            
-Use `fetch()` to get result immediately. Also to fetch json use ` fetchJson()` instead. 
-
-```java
-JsonNode json  = Request.get("http://httpbin.org/basic-auth/username/password123")
-        .basicAuth("username", "password123")
-        .timeout(10) //read and connect timeout
-        .fetchJson(); // result as json node
-
-Request.json("http://httpbin.org:80/put", Method.PUT)
-        .param("key", "value")
-        .pipe("put.json");
-```
 
 `jsonify()` will adapt your form request with params to json request  
  
@@ -130,7 +131,7 @@ result = Request.post("http://www.posttestserver.com/post.php")
         .fetch();
 ```
 
-Proxy can be set locally or globally. Fetch used to get result immediately.
+Proxy can be set locally or globally.
 
 ```java
 String result = Request.post("http://www.posttestserver.com/post.php")
@@ -139,7 +140,7 @@ String result = Request.post("http://www.posttestserver.com/post.php")
         .param("name", "John")
         .jsonify() // previous params also converted to json
         .param("jsonKey", MapUtils.mapOf("nestedKey", "nestedValue"))
-        .fetch(); // finally fires and gets result immediately
+        .fetch();
 
 
 Request.get("httpbin.org/ip")
