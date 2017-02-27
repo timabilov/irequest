@@ -53,7 +53,7 @@ Request.json("http://httpbin.org:80/put", Method.PUT)
 Fire requests asynchronously : 
 
 ```java
-Request.get("http://httpbin.org/headers")
+Request.get("http://httpbin.org/hidden-basic-auth/user/passwd")
         .async(new ResponseHandler() {
 
             public void success(Response r) {
@@ -63,22 +63,6 @@ Request.get("http://httpbin.org/headers")
 
             public void error(BrokenRequestException failedRequest) {
                 System.err.println("Sorry bro");
-                System.out.println(failedRequest.getHeaders());
-
-            }
-        });
-```
-Also you can try re-use the same request.
- 
-```java
-Request.get("http://httpbin.org/hidden-basic-auth/user/passwd")
-        .async(new ResponseHandler() {
-
-            public void success(Response r) {
-                System.out.println(r.getBody());
-            }
-
-            public void error(BrokenRequestException failedRequest) {
                 // you have to authorize
                 System.out.println(failedRequest.getHeaders());
 
@@ -92,10 +76,10 @@ Request.get("http://httpbin.org/hidden-basic-auth/user/passwd")
                     e.printStackTrace();
                     System.out.println("Damn!");
                 }
-
             }
         });
-```            
+```
+      
 
 `jsonify()` will adapt your form request with params to json request  
  
