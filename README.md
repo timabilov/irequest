@@ -106,11 +106,12 @@ You can convert post request with converted params from plain form to multipart 
 
 ```java
 result = Request.post("http://www.posttestserver.com/post.php")
+        //.proxy("112.214.73.253", 80)
         .param("phone", "+994XXYYYYYYY")
         .param("id", "123456")
         .param("file", new File("C:/Finish.log")) // Upload file. Implicitly casts to multipart(!).
         .jsonify() // force convert to json request(not multipart anymore) with file translation encoded
-        // BASE64 body { ... "file":{"Finish.log":"RmluaXNoIA0K"}}
+        // BASE64 body { ... "file":{"name": "Finish.log", "body": "RmluaXNoIA0K"}}
         .snapshot()
         .fetch();
 ```

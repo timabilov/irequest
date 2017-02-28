@@ -37,7 +37,7 @@ public class Main {
 
             Request.get("http://httpbin.org/ip")
                     .snapshot()
-                    .proxy("27.48.5.68", 8080)
+                    //.proxy("27.48.5.68", 8080)
                     .pipe(System.out);
 
             Request.get("http://httpbin.org/headers")
@@ -81,7 +81,7 @@ public class Main {
                     });
 
             String result = Request.post("http://www.posttestserver.com/post.php")
-                    .proxy("27.48.5.68", 8080, true) // you can save like this - or down below
+                   // .proxy("27.48.5.68", 8080, true) // you can save like this - or down below
                     .saveProxy()  // save session proxy settings globally until overwritten
                     .param("name", "John")
                     .jsonify() // previous params also converted to json
@@ -112,7 +112,7 @@ public class Main {
                     .param("id", "123456")
                     .param("file", new File("C:/Finish.log")) // Upload file. Implicitly casts to multipart(!).
                     .jsonify() // force convert to json request(not multipart anymore) with file translation encoded
-                    // BASE64 body { ... "file":{"Finish.log":"RmluaXNoIA0K"}}
+                    // BASE64 body { ... "file":{"name": "Finish.log", "body": "RmluaXNoIA0K"}}
                     .snapshot()
                     .fetch();
 

@@ -88,7 +88,7 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
             try {
 
                 FileInputStream fis = new FileInputStream(file.getValue());
-                jsonRequest.param(file.getKey(), MapUtils.mapOf(file.getValue().getName(), DatatypeConverter.printBase64Binary(Utils.read(fis, "UTF-8").getBytes())));
+                jsonRequest.param(file.getKey(), MapUtils.mapOf("name", file.getValue().getName(),"body", DatatypeConverter.printBase64Binary(Utils.read(fis, "UTF-8").getBytes())));
 
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
