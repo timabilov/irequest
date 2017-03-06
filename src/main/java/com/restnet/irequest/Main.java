@@ -49,7 +49,7 @@ public class Main {
                         }
 
                         public void error(BrokenRequestException failedRequest) {
-                            System.err.println("Sorry bro");
+
                             System.out.println(failedRequest.getHeaders());
 
                         }

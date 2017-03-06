@@ -50,7 +50,7 @@ Request.json("http://httpbin.org:80/put", Method.PUT)
         .pipe("put.json");
 ```
 
-Fire requests asynchronously : 
+Handle fired requests asynchronously(not at I/O level) : 
 
 ```java
 Request.get("http://httpbin.org/hidden-basic-auth/user/passwd")
@@ -62,10 +62,7 @@ Request.get("http://httpbin.org/hidden-basic-auth/user/passwd")
             }
 
             public void error(BrokenRequestException failedRequest) {
-                System.err.println("Sorry bro");
-                // you have to authorize
-                System.out.println(failedRequest.getHeaders());
-
+      
                 try {
                     failedRequest.repair()
                             .header("ThisHeaderChangesEverything", "Really")
