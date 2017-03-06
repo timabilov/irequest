@@ -1,7 +1,7 @@
 # iRequest
 Thinnest HTTP Client ***based on HttpURLConnection*** provides you - wraps all functionality in soft manner with fluent-like interface.
 
-This client abstracts you from all boilerplate that you write within native API i.e. Intended to use due to  DRY pain of native API  which many of us encounter's i think) 
+This client abstracts you from all boilerplate that you write within native API i.e. Just it.    
 
  
 **DO NOT** supports get requests with body  because of specification and etc.
