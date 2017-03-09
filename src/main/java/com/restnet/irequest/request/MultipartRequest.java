@@ -35,7 +35,7 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
      *  Only for converting to other requests multipart  purpose
      * @param r
      */
-    protected MultipartRequest(FormRequest r, String charset)  {
+    protected MultipartRequest(PostRequest r, String charset)  {
 
         super(r.http, r.url, r.method,  r.body, r.name, r.userStreamDecoratorClazz, r.printRawAtTheEnd, r.suppressHttpFail);
         this.params = new HashMap<String, Object>(r.params);

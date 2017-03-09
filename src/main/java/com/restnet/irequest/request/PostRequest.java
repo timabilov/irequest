@@ -13,10 +13,10 @@ import java.util.HashMap;
  * @author TamerlanA
  */
 
-public class FormRequest extends GenericRequest<FormRequest> {
+public class PostRequest extends GenericRequest<PostRequest> {
 
 
-    protected FormRequest(String urlRaw) throws MalformedURLException, IOException {
+    protected PostRequest(String urlRaw) throws MalformedURLException, IOException {
 
         super(urlRaw, Method.POST);
         header("Content-Type", "application/x-www-form-urlencoded");
@@ -24,12 +24,12 @@ public class FormRequest extends GenericRequest<FormRequest> {
     }
 
     @Override
-    protected FormRequest getThis() {
+    protected PostRequest getThis() {
         return this;
     }
 
     @Override
-    public FormRequest header(String key, String value) {
+    public PostRequest header(String key, String value) {
         // ignore content types because based upon
         if (key.equals("Content-Type"))
             return this;
@@ -38,7 +38,7 @@ public class FormRequest extends GenericRequest<FormRequest> {
     }
 
 
-    public FormRequest body(String content){
+    public PostRequest body(String content){
         super.body(content);
         return getThis();
     }
@@ -49,7 +49,7 @@ public class FormRequest extends GenericRequest<FormRequest> {
         return new JsonRequest(this).with(new HashMap<String, Object>(params));
     }
 
-    public FormRequest param(String name, String value){
+    public PostRequest param(String name, String value){
 
         params.put(name, value);
         return this;
@@ -85,7 +85,7 @@ public class FormRequest extends GenericRequest<FormRequest> {
 
         super.pack();
 
-        if (params != null && params.size() > 0) {
+        if (params != null && params.size() > 0 && ((body == null) || (body.toString().isEmpty()))) {
             String transformed = constructParams(MapUtils.stringify(params));
 
             body = new StringBuilder(transformed);

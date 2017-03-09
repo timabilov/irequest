@@ -21,7 +21,15 @@ public class Main {
         try {
 
 
+            Request.url("https://httpbin.org/post", Method.POST)
+                    .header("Content-Type", "text/xml")
+                    .body("<xml>body</xml>")
+                    .pipe(System.out);
 
+            Request.post("https://httpbin.org/post")
+                    .param("a","6")
+                    .body("a=5")
+                    .pipe(System.out);
             Request.get("https://www.google.az/favicon.ico?key=initial")
                     .arg("key2", "additional") // url args
                     .snapshot() // prints request before send
