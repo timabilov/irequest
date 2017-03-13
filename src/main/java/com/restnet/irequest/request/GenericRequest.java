@@ -17,6 +17,7 @@ import java.util.Map;
 
 public abstract class GenericRequest<T extends GenericRequest<T>> {
 
+    private static final String GET = "GET";
 
     HashMap<String, Object> params = new HashMap<String, Object>();
 
@@ -402,7 +403,7 @@ public abstract class GenericRequest<T extends GenericRequest<T>> {
         if ( method != Method.GET)
             header("Content-Length", body.length() + "");
 
-        if (!(headers.containsKey("Accept-Encoding") || headers.containsKey("accept-ecoding"))){
+        if (!(headers.containsKey("Accept-Encoding") || headers.containsKey("accept-encoding"))){
             acceptEncoding("gzip"); // at the end auto injects available appropriate stream
         }
 

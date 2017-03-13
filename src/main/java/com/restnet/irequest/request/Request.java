@@ -44,7 +44,6 @@ public class Request extends GenericRequest<Request> {
         return new Request(url, method);
     }
 
-
     public static JsonRequest put(String urlRaw) throws MalformedURLException, IOException {
 
         return new JsonRequest(urlRaw, Method.PUT);

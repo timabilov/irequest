@@ -19,7 +19,10 @@ public class GetRequest extends GenericRequest<GetRequest> {
     }
 
 
-
+    @Override
+    GetRequest body(String content) {
+        return super.body(content);
+    }
 
     @Override
     protected GetRequest getThis() {
