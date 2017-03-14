@@ -159,6 +159,7 @@ public abstract class GenericRequest<T extends GenericRequest<T>> {
             System.setProperty("socksProxyPort", (port == -1 ? "":port) + "");
 
         }
+        isProxyGlobal = true;
 
     }
 
