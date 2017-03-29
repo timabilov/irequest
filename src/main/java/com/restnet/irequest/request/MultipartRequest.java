@@ -4,14 +4,12 @@ package com.restnet.irequest.request;
 
 import com.restnet.irequest.exception.BadHTTPStatusException;
 import com.restnet.irequest.exception.FileRelocationException;
+import com.restnet.irequest.utils.FileDTO;
 import com.restnet.irequest.utils.MapUtils;
 import com.restnet.irequest.utils.Utils;
 
 import javax.xml.bind.DatatypeConverter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URLConnection;
 import java.util.HashMap;
@@ -24,7 +22,7 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
 
 
 
-    HashMap<String, File> files = new HashMap<String, File>();
+    HashMap<String,FileDTO> files = new HashMap<String, FileDTO>();
     String charset;
     private  final String boundary;
 
@@ -84,11 +82,11 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
 
         JsonRequest jsonRequest = new JsonRequest(this).with(new HashMap<String, Object>(params));
 
-        for (Map.Entry<String, File> file: files.entrySet()){
+        for (Map.Entry<String, FileDTO> file: files.entrySet()){
             try {
 
-                FileInputStream fis = new FileInputStream(file.getValue());
-                jsonRequest.param(file.getKey(), MapUtils.mapOf("name", file.getValue().getName(),"body", DatatypeConverter.printBase64Binary(Utils.read(fis, "UTF-8").getBytes())));
+
+                jsonRequest.param(file.getKey(), MapUtils.mapOf("name", file.getValue().getName(),"body", DatatypeConverter.printBase64Binary(Utils.read(new ByteArrayInputStream(file.getValue().getBody()), "UTF-8").getBytes())));
 
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -103,10 +101,18 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
         return jsonRequest;
     }
 
-    public MultipartRequest param(String name, File file){
+    public MultipartRequest param(String name, File file) throws IOException {
 
 
-        files.put(name, file);
+        files.put(name, new FileDTO(file.getName(), Utils.read(new FileInputStream(file)).toByteArray()));
+        return this;
+    }
+
+
+    public MultipartRequest param(String name, FileDTO fileDTO) throws IOException {
+
+
+        files.put(name, new FileDTO(fileDTO.getName(), fileDTO.getBody()));
         return this;
     }
 
@@ -122,7 +128,7 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
             body.append(toMultipartField(pair.getKey(), (String)pair.getValue()));
         }
 
-        for (Map.Entry<String, File> pair: files.entrySet()){
+        for (Map.Entry<String, FileDTO> pair: files.entrySet()){
 
             body.append(toMultipartFile(pair.getKey(), pair.getValue()));
         }
@@ -152,7 +158,7 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
     }
 
 
-    private String toMultipartFile(String name, File file) throws FileNotFoundException, IOException {
+    private String toMultipartFile(String name, FileDTO file) throws FileNotFoundException, IOException {
 
 
         String fileName = file.getName();
@@ -170,9 +176,9 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
         builder.append(LINE_FEED);
 
 
-        FileInputStream fis = new FileInputStream(file);
 
-        builder.append(Utils.read(fis));
+
+        builder.append(Utils.read(new ByteArrayInputStream(file.getBody())));
 
         builder.append(LINE_FEED);
 

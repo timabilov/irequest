@@ -6,6 +6,7 @@ import com.restnet.irequest.request.GetRequest;
 import com.restnet.irequest.request.Request;
 import com.restnet.irequest.request.Response;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -20,10 +21,10 @@ import static org.junit.Assert.*;
 public class GenericRequstTest {
 
 
-    @Before
-    public void setUp(){
+    @BeforeClass
+    public static void setUp(){
 
-
+        Request.setJVMProxyServer("172.0.30.4", 3128, false);
     }
 
 

@@ -1,5 +1,6 @@
 package com.restnet.irequest.request;
 
+import com.restnet.irequest.utils.FileDTO;
 import com.restnet.irequest.utils.MapUtils;
 
 import java.io.File;
@@ -62,7 +63,14 @@ public class PostRequest extends GenericRequest<PostRequest> {
      * @param file
      * @return
      */
-    public MultipartRequest param(String name, File file){
+    public MultipartRequest param(String name, File file) throws IOException {
+
+
+        return multipart("UTF-8").setParams(params).param(name, file);
+
+    }
+
+    public MultipartRequest param(String name, FileDTO file) throws IOException {
 
 
         return multipart("UTF-8").setParams(params).param(name, file);
