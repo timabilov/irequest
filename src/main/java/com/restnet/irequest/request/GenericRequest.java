@@ -10,6 +10,7 @@ import com.restnet.irequest.utils.Utils;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -137,8 +138,13 @@ public abstract class GenericRequest<T extends GenericRequest<T>> {
         migrateHeaders();
 
         if (http.getDoOutput())
-            Utils.write(http.getOutputStream(), new ByteArrayInputStream(body.toString().getBytes("UTF-8")));
+            Utils.write(http.getOutputStream(), new ByteArrayInputStream(transformToBytes(body.toString())));
 
+    }
+
+    byte[] transformToBytes(String data){
+
+        return data.getBytes(StandardCharsets.UTF_8);
     }
 
     public static void forgetProxy(){
@@ -655,7 +661,7 @@ public abstract class GenericRequest<T extends GenericRequest<T>> {
         raw.append(MapUtils.join( headers, "\n", ": ","Cookie"))
                 .append(cookies.size() > 0 ? " Cookie: ": "" )
                 .append(MapUtils.join(cookies,"; ", "=").concat("\n\n"))
-                .append(body.toString().replaceAll("(?m)^", "").concat("\n"));
+                .append((this instanceof MultipartRequest ? new String(Utils.fromBase64(body.toString())).replaceAll("(?m)^", "") : body.toString()).replaceAll("(?m)^", "").concat("\n"));
 
         raw.append("\n-----");
 

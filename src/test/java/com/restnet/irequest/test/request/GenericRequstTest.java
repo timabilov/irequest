@@ -21,11 +21,6 @@ import static org.junit.Assert.*;
 public class GenericRequstTest {
 
 
-    @BeforeClass
-    public static void setUp(){
-
-        Request.setJVMProxyServer("172.0.30.4", 3128, false);
-    }
 
 
 

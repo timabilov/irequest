@@ -51,8 +51,6 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
     public MultipartRequest(String urlRaw, String charset) throws MalformedURLException, IOException {
 
         super(urlRaw, Method.POST);
-        byte[] rand = new byte[36]; // rest of boundary must be 16 symbol - UTF_8
-
 
         boundary = "----WebKitFormBoundary".concat(Utils.randomString(16)); // used webkit style boundary  for no reason;
 
@@ -125,16 +123,17 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
 
         for (Map.Entry<String, Object> pair: params.entrySet()){
 
-            body.append(toMultipartField(pair.getKey(), (String)pair.getValue()));
+            body.append(Utils.toBase64(toMultipartField(pair.getKey(), (String)pair.getValue()).getBytes()));
         }
 
+
+        // encoded to base64 with binary
         for (Map.Entry<String, FileDTO> pair: files.entrySet()){
 
             body.append(toMultipartFile(pair.getKey(), pair.getValue()));
         }
-        body.append(LINE_FEED);
-
-        body.append("--").append(boundary).append("--").append(LINE_FEED);
+        body.append(Utils.toBase64((
+                "--" + boundary + "--" + LINE_FEED).getBytes()));
         if (debug) {
             System.out.println("Builded multipart.");
             System.out.println(body.toString());
@@ -144,6 +143,12 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
 
     }
 
+
+    @Override
+    byte[] transformToBytes(String data) {
+
+        return Utils.fromBase64(data);
+    }
 
     private String toMultipartField(String name, String value){
 
@@ -175,12 +180,13 @@ public class MultipartRequest extends GenericRequest<MultipartRequest> {
 
         builder.append(LINE_FEED);
 
+        builder = new StringBuilder(Utils.toBase64(builder.toString().getBytes()));
 
 
+        builder.append(Utils.toBase64(file.getBody()))
+        .append(Utils.toBase64(LINE_FEED.getBytes()));
 
-        builder.append(Utils.read(new ByteArrayInputStream(file.getBody())));
 
-        builder.append(LINE_FEED);
 
         return  builder.toString();
     }

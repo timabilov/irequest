@@ -18,6 +18,8 @@ import java.util.Random;
  */
 public class Utils {
 
+    private static String base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabsdefghijklmnopqrstuvwxyz";
+    private static Random random = new Random();
 
     public static String join(List<String> items, String separator){
 
@@ -121,8 +123,7 @@ public class Utils {
         return b.toString();
     }
 
-    private static String base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabsdefghijklmnopqrstuvwxyz";
-    private static Random random = new Random();
+
 
     public static  void write(OutputStream outputStream, InputStream is) throws IOException {
         String str = "";
@@ -168,5 +169,15 @@ public class Utils {
 
     }
 
+
+    public static String toBase64(byte[] bytes){
+
+        return DatatypeConverter.printBase64Binary(bytes);
+    }
+
+    public static byte[] fromBase64(String s){
+
+        return DatatypeConverter.parseBase64Binary(s);
+    }
 
 }
