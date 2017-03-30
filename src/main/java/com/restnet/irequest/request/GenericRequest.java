@@ -152,7 +152,7 @@ public abstract class GenericRequest<T extends GenericRequest<T>> {
         isProxyGlobal = false;
     }
 
-    public static void setJVMProxyServer(String host, int port, boolean isSOCKS){
+    private static void setJVMProxyServer(String host, int port, boolean isSOCKS){
 
         if (!isSOCKS) {
             System.setProperty("http.proxyHost", host);
@@ -165,6 +165,24 @@ public abstract class GenericRequest<T extends GenericRequest<T>> {
             System.setProperty("socksProxyPort", (port == -1 ? "":port) + "");
 
         }
+
+
+    }
+
+    public static void enableProxy(String host, int port, boolean isSOCKS){
+
+        if (!isSOCKS) {
+            System.setProperty("http.proxyHost", host);
+            System.setProperty("http.proxyPort", (port == -1 ? "":port)  + "");
+            System.setProperty("https.proxyHost", host);
+            System.setProperty("https.proxyPort", (port == -1 ? "":port) + "");
+        } else {
+
+            System.setProperty("socksProxyHost", host);
+            System.setProperty("socksProxyPort", (port == -1 ? "":port) + "");
+
+        }
+
         isProxyGlobal = true;
 
     }
