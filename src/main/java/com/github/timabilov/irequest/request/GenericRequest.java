@@ -10,7 +10,6 @@ import com.github.timabilov.irequest.exception.ReaderInitException;
 import com.github.timabilov.irequest.utils.MapUtils;
 import com.github.timabilov.irequest.utils.Utils;
 import com.github.timabilov.irequest.enums.HttpCompressType;
-import com.restnet.irequest.exception.*;
 
 import java.io.*;
 import java.net.*;

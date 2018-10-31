@@ -25,7 +25,7 @@ public class GenericRequstTest {
     @Test
     public void testCommon() throws IOException, BadHTTPStatusException {
 
-        GetRequest r = Request.get("https://github.com/mainstream95/irequest");
+        GetRequest r = Request.get("https://github.com/timabilov/irequest");
         assertTrue(r.getBody().toString().isEmpty());
         assertTrue(!r.isDebug());
         assertTrue(r.getHeaders().size() == 0);
@@ -46,7 +46,7 @@ public class GenericRequstTest {
     @Test
     public void testFetch() throws IOException, BadHTTPStatusException {
 
-        GetRequest r = Request.get("https://github.com/mainstream95/irequest");
+        GetRequest r = Request.get("https://github.com/timabilov/irequest");
         assertTrue(r.getBody().toString().isEmpty());
         assertTrue(!r.isDebug());
         assertTrue(r.getHeaders().size() == 0);
