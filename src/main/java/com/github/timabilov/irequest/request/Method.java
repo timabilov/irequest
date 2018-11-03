@@ -6,9 +6,10 @@ package com.github.timabilov.irequest.request;
 public class Method {
 
 
-    final static Method GET = new Method("GET");
+    public final static Method GET = new Method("GET");
     public final static Method POST = new Method("POST");
     public final static Method PUT = new Method("PUT");
+    public final static Method DELETE = new Method("DELETE");
     public final static Method HEAD = new Method("HEAD");
     public final static Method PATCH = new Method("PATCH");
 

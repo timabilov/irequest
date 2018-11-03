@@ -39,8 +39,9 @@ public class Request extends GenericRequest<Request> {
         return new GetRequest(urlRaw);
     }
 
-    public static Request url(String url, Method method) throws MalformedURLException, IOException {
-
+    public static GenericRequest<? extends GenericRequest<?>> url(String url, Method method) throws MalformedURLException, IOException {
+        if (method == Method.GET)
+            return new GetRequest(url);
         return new Request(url, method);
     }
 
