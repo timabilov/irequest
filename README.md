@@ -1,9 +1,18 @@
 # iRequest
 Thinnest HTTP Client ***based on HttpURLConnection*** provides you - wraps all functionality in soft manner with fluent-like interface.
 
-This client abstracts you from all boilerplate and extra dependency(JSON, XML etc.) that you write within native API as hard as possible. i.e. Just it.    
+This client abstracts you from all boilerplate and extra dependency(JSON, XML etc.) that you write within native API as hard as possible.    
 
  
+ ```xml
+ <dependency>
+     <groupId>com.github.timabilov</groupId>
+     <artifactId>irequest</artifactId>
+     <version>1.0.3</version>
+ </dependency>
+ ```   
+
+
 **DO NOT** supports get requests with body  because of specification and etc.
 
 http://stackoverflow.com/questions/18664413/can-i-do-an-http-get-and-include-a-body-using-httpurlconnection
@@ -20,7 +29,6 @@ Stream response to anywhere directly or store after
 ```java
 
 Request.get("http://httpbin.org/ip")
-        .snapshot() 
         .proxy("27.48.5.68", 8080)
         .pipe(System.out);
         
@@ -173,34 +181,5 @@ result = Request.post("http://httpbin.org:80/post")
         .fetch();
 ```
 
-By default cookies are validated.
-
-```java
-try {
-    result = Request.get("http://httpbin.org:80/cookies")
-            .header("Cookie", "UnparseableCookie;;;") // throws CookieParseException. By default validated.
-            .snapshot()
-            .fetch();
-} catch (CookieParseException cpe){
-
-    cpe.printStackTrace();
-}
-
-Request.skipCookieValidation(true);
-
-result = Request.get("http://httpbin.org:80/cookies")
-
-        .header("Cookie", "UnparseableCookie;;;") // now allowed
-        .snapshot()
-        .fetch();
-
-```
-
-      
-
-
-
-  
-
-
+By default cookies are validated. You can disable this `Request.skipCookieValidation(true)`
 
